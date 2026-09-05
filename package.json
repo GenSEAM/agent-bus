@@ -1,0 +1,27 @@
+{
+  "name": "@genseam/asl-agent-bus",
+  "version": "0.2.0",
+  "type": "module",
+  "description": "High-throughput Inter-Agent Swarm Bus & A2A Mesh Transport in AgentScript",
+  "main": "src/bus.asl",
+  "module": "bridges/ts/index.ts",
+  "types": "bridges/ts/index.ts",
+  "exports": {
+    ".": "./bridges/ts/index.ts",
+    "./transport": "./bridges/ipc_transport.js"
+  },
+  "scripts": {
+    "test": "node --test tests/bus.test.js && node ../asl/bin/asl gate src/bus.asl src/mesh.asl tests/bus_test.asl"
+  },
+  "keywords": [
+    "agentscript",
+    "agent-bus",
+    "mesh",
+    "a2a",
+    "ipc",
+    "sse",
+    "pubsub"
+  ],
+  "author": "GenSEAM Team",
+  "license": "MIT"
+}
