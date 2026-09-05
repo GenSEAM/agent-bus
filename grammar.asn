@@ -59,5 +59,36 @@
           :rationale "Formats Gateway inspection verdict into valid Anthropic Messages response JSON")
     (:sym :name "test-anthropic-adapter" :kind :fn :tokens 3
           :rationale "Verifies adaptation of Anthropic Messages requests and responses")
+
+    ;; Phase 18 Browser Bridge Symbols
+    (:sym :name "BridgeTab" :kind :type :tokens 1)
+    (:sym :name "BridgeCommand" :kind :type :tokens 1)
+    (:sym :name "BrowserBridgeState" :kind :type :tokens 1)
+    (:sym :name "bridge-init" :kind :fn :tokens 2)
+    (:sym :name "bridge-register-tab" :kind :fn :tokens 3
+          :rationale "Registers or updates active browser tab in the bridge state registry")
+    (:sym :name "bridge-enqueue-command" :kind :fn :tokens 3
+          :rationale "Appends incoming action command to the bridge queue in FIFO order")
+    (:sym :name "bridge-poll-commands" :kind :fn :tokens 3
+          :rationale "Pulls pending commands for target tab and transitions status to dispatched")
+    (:sym :name "bridge-complete-command" :kind :fn :tokens 3
+          :rationale "Marks command completed with execution result or records failure")
+    (:sym :name "handle-mcp-request" :kind :fn :tokens 3
+          :rationale "Routes incoming JSON-RPC MCP requests across initialize, tools/list, and tools/call")
+    (:sym :name "format-cors-http-response" :kind :fn :tokens 4
+          :rationale "Constructs HTTP response string with permissive CORS headers and status code")
+    (:sym :name "test-bridge-init" :kind :fn :tokens 3
+          :rationale "Verifies initialization of bridge state on configured port")
+    (:sym :name "test-bridge-register-tab" :kind :fn :tokens 4
+          :rationale "Verifies tab registration and metadata update semantics")
+    (:sym :name "test-bridge-enqueue-and-poll-fifo" :kind :fn :tokens 6
+          :rationale "Verifies FIFO command queuing and atomic dispatch state transition on poll")
+    (:sym :name "test-bridge-complete-command" :kind :fn :tokens 4
+          :rationale "Verifies command status transition to completed and result storage")
+    (:sym :name "test-format-cors-http-response" :kind :fn :tokens 5
+          :rationale "Verifies formatting of HTTP responses with permissive CORS headers")
+    (:sym :name "test-handle-mcp-request" :kind :fn :tokens 4
+          :rationale "Verifies MCP protocol request handling across initialize, list, and call")
   ]
 )
+
