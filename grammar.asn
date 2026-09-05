@@ -1,0 +1,30 @@
+;; Package Grammar & Exported Symbol Registry (ASN)
+;; @genseam/agent-bus
+(:grammar
+  :package @genseam/agent-bus
+  :version "0.1.0"
+  :tokens-baseline 2
+  :symbols [
+    ;; Core Types (<= 2 tokens)
+    (:sym :name "AgentMessage" :kind :type :tokens 2)
+    (:sym :name "BusEvent" :kind :type :tokens 2)
+    (:sym :name "TransportProtocol" :kind :type :tokens 2)
+    (:sym :name "MeshNode" :kind :type :tokens 2)
+    (:sym :name "RoutingTable" :kind :type :tokens 2)
+
+    ;; Core Functions (<= 2 tokens)
+    (:sym :name "is-broadcast" :kind :fn :tokens 2)
+    (:sym :name "route-packet" :kind :fn :tokens 2)
+    (:sym :name "run-tests" :kind :fn :tokens 2)
+
+    ;; Extended Operations (> 2 tokens with required :rationale)
+    (:sym :name "format-sse-event" :kind :fn :tokens 3
+          :rationale "Formats standard Server-Sent Events stream payload for agent bus clients")
+    (:sym :name "create-routing-table" :kind :fn :tokens 3
+          :rationale "Initializes empty routing table for the swarm mesh")
+    (:sym :name "register-mesh-node" :kind :fn :tokens 3
+          :rationale "Registers an active agent node into the mesh routing table")
+    (:sym :name "is-node-alive" :kind :fn :tokens 3
+          :rationale "Heartbeat and liveness inspection predicate for mesh nodes")
+  ]
+)
