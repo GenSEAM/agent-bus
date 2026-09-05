@@ -26,5 +26,32 @@
           :rationale "Registers an active agent node into the mesh routing table")
     (:sym :name "is-node-alive" :kind :fn :tokens 3
           :rationale "Heartbeat and liveness inspection predicate for mesh nodes")
+
+    ;; Phase 09 L7 Cognitive Gateway Symbols
+    (:sym :name "GatewayChannel" :kind :type :tokens 1)
+    (:sym :name "MultiplexedFrame" :kind :type :tokens 1)
+    (:sym :name "GatewayInspectionVerdict" :kind :type :tokens 1)
+    (:sym :name "demux-stream-content" :kind :fn :tokens 3
+          :rationale "De-multiplexes raw model streams into UI, quarantined reasoning, and tool channels")
+    (:sym :name "detect-esh-violation" :kind :fn :tokens 3
+          :rationale "Detects verbal execution simulation hallucinations without runtime proof")
+    (:sym :name "calculate-lcs-grounding" :kind :fn :tokens 3
+          :rationale "Computes character and token grounding ratio against referenced source files")
+    (:sym :name "inspect-gateway-turn" :kind :fn :tokens 3
+          :rationale "Audits agent turn frame enforcing cognitive isolation and anti-hallucination policies")
+    (:sym :name "format-gateway-verdict" :kind :fn :tokens 3
+          :rationale "Formats structured diagnostic S-expression verdict from gateway inspection")
+    (:sym :name "test-demux-channels" :kind :fn :tokens 3
+          :rationale "Unit test verifying tri-channel multiplexing and separation")
+    (:sym :name "test-quarantine-reasoning" :kind :fn :tokens 3
+          :rationale "Unit test verifying chain-of-thought tokens are quarantined from user output")
+    (:sym :name "test-verbal-esh-rejection" :kind :fn :tokens 4
+          :rationale "Unit test verifying verbal claims of test passage without proof are rejected")
+    (:sym :name "test-verified-execution-allowed" :kind :fn :tokens 4
+          :rationale "Unit test asserting verified runtime executions are permitted by the gateway")
+    (:sym :name "test-lcs-grounding" :kind :fn :tokens 3
+          :rationale "Unit test verifying token overlap grounding calculations")
+    (:sym :name "test-format-gateway-verdict" :kind :fn :tokens 4
+          :rationale "Unit test asserting structured formatting of gateway diagnostic blocks")
   ]
 )
