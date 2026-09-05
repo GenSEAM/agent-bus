@@ -7,7 +7,9 @@
       detect-esh-violation
       calculate-lcs-grounding
       inspect-gateway-turn
-      format-gateway-verdict]
+      format-gateway-verdict
+      adapt-anthropic-request
+      format-anthropic-response]
   :i [])
 
 (dfe GatewayChannel
@@ -154,3 +156,18 @@
   (if (.-allowed verdict)
       (str "(:gateway-verdict :allowed true :tool-count " (string-from-int64 (list-length (.-tool-frames verdict))) ")")
       (str "(:gateway-verdict :allowed false :reason \"" (.-rejection-reason verdict) "\")")))
+
+(df adapt-anthropic-request [(messages-json Str) (tools-json Str)] -> Str
+  :d "Adapts Anthropic Messages API payload into canonical ASL cognitive gateway frame."
+  (str "(:anthropic-turn :messages " messages-json " :tools " tools-json ")"))
+
+(df format-anthropic-response [(verdict GatewayInspectionVerdict) (model Str)] -> Str
+  :d "Formats Gateway verdict into valid Anthropic Messages API response JSON."
+  (if (.-allowed verdict)
+      (let [(content (.-sanitized-user-output verdict))
+            (tools (.-tool-frames verdict))]
+        (if (list-empty? tools)
+            (str "{\"id\": \"msg_asl\", \"type\": \"message\", \"role\": \"assistant\", \"model\": \"" model "\", \"content\": [{\"type\": \"text\", \"text\": \"" (string-replace content "\"" "\\\"") "\"}]}")
+            (let [(tc (first tools))]
+              (str "{\"id\": \"msg_asl\", \"type\": \"message\", \"role\": \"assistant\", \"model\": \"" model "\", \"content\": [{\"type\": \"text\", \"text\": \"" (string-replace content "\"" "\\\"") "\"}, {\"type\": \"tool_use\", \"id\": \"call_asl\", \"name\": \"tool\", \"input\": {\"call\": \"" (string-replace tc "\"" "\\\"") "\"}}]}"))))
+      (str "{\"id\": \"msg_err\", \"type\": \"error\", \"error\": {\"type\": \"gateway_rejection\", \"message\": \"" (.-rejection-reason verdict) "\"}}")))

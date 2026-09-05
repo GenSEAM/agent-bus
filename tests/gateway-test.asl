@@ -6,6 +6,7 @@
       test-verified-execution-allowed
       test-lcs-grounding
       test-format-gateway-verdict
+      test-anthropic-adapter
       run-tests]
   :i [(gateway :a gw)])
 
@@ -75,6 +76,15 @@
     (and (string-contains? s-ok "(:gateway-verdict :allowed true")
          (string-contains? s-err "(:gateway-verdict :allowed false"))))
 
+(df test-anthropic-adapter [] -> Bool
+  :d "Verifies adaptation of Anthropic Messages requests and responses"
+  (let [(req (gw/adapt-anthropic-request "[{\"role\": \"user\", \"content\": \"hello\"}]" "[]"))
+        (v-ok (gw/GatewayInspectionVerdict :allowed true :quarantined-reasoning "internal" :sanitized-user-output "hello" :tool-frames (list "fs-read") :rejection-reason ""))
+        (resp (gw/format-anthropic-response v-ok "claude-3-7-sonnet"))]
+    (and (string-contains? req ":anthropic-turn")
+         (and (string-contains? resp "\"type\": \"message\"")
+              (string-contains? resp "\"type\": \"tool_use\"")))))
+
 (df run-tests [] -> Bool
   :d "Executes full L7 cognitive gateway test suite."
   (and (test-demux-channels)
@@ -82,4 +92,5 @@
             (and (test-verbal-esh-rejection)
                  (and (test-verified-execution-allowed)
                       (and (test-lcs-grounding)
-                           (test-format-gateway-verdict)))))))
+                           (and (test-format-gateway-verdict)
+                                (test-anthropic-adapter))))))))
