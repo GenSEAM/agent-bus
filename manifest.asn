@@ -1,0 +1,5 @@
+(:package @genseam/asl-agent-bus
+ :version "0.1.0"
+ :entry "src/bus.asl"
+ :description "High-frequency in-memory agent-to-agent communication mesh"
+ :dependencies [])
