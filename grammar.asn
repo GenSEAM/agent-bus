@@ -89,6 +89,37 @@
           :rationale "Verifies formatting of HTTP responses with permissive CORS headers")
     (:sym :name "test-handle-mcp-request" :kind :fn :tokens 4
           :rationale "Verifies MCP protocol request handling across initialize, list, and call")
+
+    ;; Phase 33 Wire Protocol & Adaptive Compression Symbols
+    (:sym :name "CodecKind" :kind :type :tokens 1)
+    (:sym :name "CompressionAlgo" :kind :type :tokens 2)
+    (:sym :name "WireFrame" :kind :type :tokens 1)
+    (:sym :name "is-compressed?" :kind :fn :tokens 2)
+    (:sym :name "create-wire-frame" :kind :fn :tokens 3
+          :rationale "Constructs an adaptive wire frame routing raw or compressed payloads by length threshold")
+    (:sym :name "compact-wire-payload" :kind :fn :tokens 3
+          :rationale "Applies dictionary-trained token compaction replacing repetitive S-expression heads")
+    (:sym :name "expand-wire-payload" :kind :fn :tokens 3
+          :rationale "Inverts dictionary compaction restoring canonical ASN S-expression heads")
+    (:sym :name "encode-wire-frame" :kind :fn :tokens 3
+          :rationale "Encodes WireFrame into a serialized wire transmission envelope string")
+    (:sym :name "decode-wire-frame" :kind :fn :tokens 3
+          :rationale "Parses a serialized wire envelope string into a structured WireFrame")
+    (:sym :name "unpack-wire-frame" :kind :fn :tokens 3
+          :rationale "Unpacks payload by decompressing when compressed flag is true or returning raw")
+    (:sym :name "test-wire-small-payload-uncompressed" :kind :fn :tokens 5
+          :rationale "Verifies that messages under 128 bytes bypass compression and pass raw")
+    (:sym :name "test-wire-large-payload-compressed" :kind :fn :tokens 5
+          :rationale "Verifies that payloads >= 128 bytes are compacted with compression flag true")
+    (:sym :name "test-wire-payload-roundtrip" :kind :fn :tokens 4
+          :rationale "Verifies dictionary compaction and expansion round-trips with zero data loss")
+    (:sym :name "test-wire-encode-decode-envelope" :kind :fn :tokens 5
+          :rationale "Verifies serialization and deserialization of wire envelopes")
+    (:sym :name "test-wire-unpack-direct-vs-decompressed" :kind :fn :tokens 6
+          :rationale "Verifies transparent unpacking across both raw and compressed wire frames")
+    (:sym :name "run-wire-tests" :kind :fn :tokens 3
+          :rationale "Runs complete unit test suite for wire protocol and compression framing")
   ]
 )
+
 
