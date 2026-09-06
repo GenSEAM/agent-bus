@@ -57,42 +57,24 @@
     (_ false)))
 
 (df pack-tkn [(raw Str)] -> Str
-  :d "Compacts verbose S-expression keys into high-density single-token keywords."
-  (let [(s1 (string-replace raw ":sender" ":s"))
-        (s2 (string-replace s1 ":target" ":t"))
-        (s3 (string-replace s2 ":payload" ":p"))
-        (s4 (string-replace s3 ":status" ":st"))
-        (s5 (string-replace s4 ":state" ":st"))
-        (s6 (string-replace s5 ":receipt" ":rc"))
-        (s7 (string-replace s6 ":dependencies" ":d"))
-        (s8 (string-replace s7 ":premises" ":pr"))
-        (s9 (string-replace s8 ":version" ":v"))
-        (s10 (string-replace s9 ":action" ":a"))
-        (s11 (string-replace s10 ":model" ":m"))
-        (s12 (string-replace s11 ":node" ":n"))
-        (s13 (string-replace s12 ":task" ":t"))]
-    s13))
+  :d "Applies rational unambiguous normalization: standardizes verbose keys into canonical single-token identifiers without collision."
+  (let [(s1 (string-replace raw ":dependencies" ":deps"))
+        (s2 (string-replace s1 ":sender" ":from"))
+        (s3 (string-replace s2 ":target" ":to"))]
+    s3))
 
 (df unpack-tkn [(compacted Str)] -> Str
-  :d "Expands single-token keywords back into canonical human-readable S-expression heads."
-  (let [(s1 (string-replace compacted ":t" ":target"))
-        (s2 (string-replace s1 ":s" ":sender"))
-        (s3 (string-replace s2 ":p" ":payload"))
-        (s4 (string-replace s3 ":st" ":status"))
-        (s5 (string-replace s4 ":rc" ":receipt"))
-        (s6 (string-replace s5 ":pr" ":premises"))
-        (s7 (string-replace s6 ":d" ":dependencies"))
-        (s8 (string-replace s7 ":v" ":version"))
-        (s9 (string-replace s8 ":a" ":action"))
-        (s10 (string-replace s9 ":m" ":model"))
-        (s11 (string-replace s10 ":n" ":node"))]
-    s11))
+  :d "Expands normalized keys back into legacy verbose keys where required."
+  (let [(s1 (string-replace compacted ":deps" ":dependencies"))
+        (s2 (string-replace s1 ":from" ":sender"))
+        (s3 (string-replace s2 ":to" ":target"))]
+    s3))
 
 (df pack-dag [(task-id Str) (title Str) (deps (List Str)) (premises (List Str))] -> Str
-  :d "Formats a DAG task node into a compact single-token ASN expression."
+  :d "Formats a DAG task node into a canonical single-token ASN expression preserving explicit state."
   (let [(d-count (list-length deps))
         (p-count (list-length premises))]
-    (pack-tkn (str "(:node :id \"" task-id "\" :title \"" title "\" :dependencies " (int-to-str d-count) " :premises " (int-to-str p-count) " :state :pending)"))))
+    (pack-tkn (str "(:node :id \"" task-id "\" :title \"" title "\" :deps " (int-to-str d-count) " :premises " (int-to-str p-count) " :state :pending)"))))
 
 (df pool-create [] -> ClusterPool
   :d "Creates an empty cluster worker pool."

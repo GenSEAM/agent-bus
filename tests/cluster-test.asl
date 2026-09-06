@@ -63,30 +63,29 @@
          (= (.-id (option-unwrap vision-opt)) "worker-vision-1"))))
 
 (df test-single-tkn-compaction [] -> Bool
-  :d "Verifies that verbose S-expression heads are packed into single-token keywords."
-  (let [(raw "(:node :sender \"orchestrator\" :target \"worker-1\" :payload \"test\" :status :pass :dependencies [\"t0\"] :premises [\"p1\"])")
-        (packed (c/pack-tkn raw))]
-    (and (string-contains? packed ":n")
-         (string-contains? packed ":s")
-         (string-contains? packed ":t")
-         (string-contains? packed ":p")
-         (string-contains? packed ":st")
-         (string-contains? packed ":d")
-         (string-contains? packed ":pr")
-         (< (string-length packed) (string-length raw)))))
+  :d "Verifies rational unambiguous normalization without state and status collision."
+  (let [(raw "(:node :sender \"orchestrator\" :target \"worker-1\" :payload \"test\" :status :pass :state :active :dependencies [\"t0\"])")
+        (normalized (c/pack-tkn raw))
+        (restored (c/unpack-tkn normalized))]
+    (and (string-contains? normalized ":from \"orchestrator\"")
+         (string-contains? normalized ":to \"worker-1\"")
+         (string-contains? normalized ":deps [\"t0\"]")
+         (string-contains? normalized ":status :pass")
+         (string-contains? normalized ":state :active")
+         (= restored raw))))
 
 (df test-pack-dag-single-tkn [] -> Bool
-  :d "Tests compacting a DAG task node definition into a single-token expression."
+  :d "Tests compacting a DAG task node definition into a canonical expression."
   (let [(deps (list "task-setup" "task-schema"))
         (premises (list "premise-airgap-active"))
         (dag-str (c/pack-dag "task-cluster-01" "Deploy remote worker" deps premises))]
-    (and (string-contains? dag-str ":n :id \"task-cluster-01\"")
-         (string-contains? dag-str ":d 2")
-         (string-contains? dag-str ":pr 1")
-         (string-contains? dag-str ":st :pending"))))
+    (and (string-contains? dag-str ":node :id \"task-cluster-01\"")
+         (string-contains? dag-str ":deps 2")
+         (string-contains? dag-str ":premises 1")
+         (string-contains? dag-str ":state :pending"))))
 
 (df test-dispatch-and-receipt-lifecycle [] -> Bool
-  :d "Tests dispatching a task frame to a worker and receiving a single-token receipt."
+  :d "Tests dispatching a task frame to a worker and receiving a canonical receipt."
   (let [(w (c/WorkerNode
              :id "worker-qwen-1"
              :host "10.0.0.1"
@@ -96,16 +95,16 @@
              :state (c/state-idle)
              :caps (list "ast-patch")
              :ping 10))
-        (dag-payload "(:task :title \"Patch AST\" :dependencies 0 :status :active)")
+        (dag-payload "(:task :title \"Patch AST\" :deps 0 :status :active)")
         (dispatch-frame (c/dispatch-task "frame-9001" "leader-node" w "task-42" dag-payload))
         (rc-frame (c/make-receipt "frame-9002" "worker-qwen-1" "leader-node" "task-42" 18 55))]
     (and (= (.-from dispatch-frame) "leader-node")
          (= (.-to dispatch-frame) "worker-qwen-1")
-         (string-contains? (.-tkn-single dispatch-frame) ":t")
+         (string-contains? (.-tkn-single dispatch-frame) ":task :title \"Patch AST\"")
          (= (.-from rc-frame) "worker-qwen-1")
          (= (.-to rc-frame) "leader-node")
-         (string-contains? (.-tkn-single rc-frame) ":rc :n \"worker-qwen-1\"")
-         (string-contains? (.-tkn-single rc-frame) ":st :pass"))))
+         (string-contains? (.-tkn-single rc-frame) ":receipt :node \"worker-qwen-1\"")
+         (string-contains? (.-tkn-single rc-frame) ":status :pass"))))
 
 (df run-cluster-tests [] -> Bool
   :d "Executes all cluster mesh and single-token DAG dispatch tests."
