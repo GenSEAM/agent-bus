@@ -9,7 +9,8 @@
   (:c ipc-uds [] "Unix domain socket IPC")
   (:c in-memory [] "In-memory fast ring transport")
   (:c sse-stream [] "Server-Sent Events streaming transport")
-  (:c wasm-channel [] "Wasm linear memory direct channel"))
+  (:c wasm-channel [] "Wasm linear memory direct channel")
+  (:c cluster-net [] "Remote cluster TCP/WebSocket transport"))
 
 (dfs MeshNode
   (:f id Str "unique agent node identifier")

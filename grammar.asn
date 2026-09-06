@@ -166,6 +166,34 @@
           :rationale "Verifies external tool dispatch and schema")
     (:sym :name "run-presence-tests" :kind :fn :tokens 3
           :rationale "Runs complete unit test suite for presence and bridge")
+
+    ;; Cluster Swarm & Single-Token DAG Dispatch Symbols
+    (:sym :name "NodeState" :kind :type :tokens 1)
+    (:sym :name "WorkerNode" :kind :type :tokens 1)
+    (:sym :name "ClusterPool" :kind :type :tokens 1)
+    (:sym :name "OpKind" :kind :type :tokens 1)
+    (:sym :name "ClusterFrame" :kind :type :tokens 1)
+    (:sym :name "pack-tkn" :kind :fn :tokens 2)
+    (:sym :name "unpack-tkn" :kind :fn :tokens 2)
+    (:sym :name "pack-dag" :kind :fn :tokens 2)
+    (:sym :name "pool-create" :kind :fn :tokens 2)
+    (:sym :name "pool-add" :kind :fn :tokens 2)
+    (:sym :name "pool-select" :kind :fn :tokens 2)
+    (:sym :name "dispatch-task" :kind :fn :tokens 2)
+    (:sym :name "make-receipt" :kind :fn :tokens 2)
+    (:sym :name "worker-idle?" :kind :fn :tokens 2)
+    (:sym :name "test-worker-idle-state" :kind :fn :tokens 4
+          :rationale "Verifies worker idle state and health")
+    (:sym :name "test-pool-registration-and-selection" :kind :fn :tokens 5
+          :rationale "Verifies cluster pool registration and worker selection")
+    (:sym :name "test-single-tkn-compaction" :kind :fn :tokens 4
+          :rationale "Verifies single-token ASN dictionary compaction")
+    (:sym :name "test-pack-dag-single-tkn" :kind :fn :tokens 5
+          :rationale "Verifies compact single-token DAG task formatting")
+    (:sym :name "test-dispatch-and-receipt-lifecycle" :kind :fn :tokens 5
+          :rationale "Verifies cluster dispatch and receipt lifecycle")
+    (:sym :name "run-cluster-tests" :kind :fn :tokens 3
+          :rationale "Runs complete cluster mesh and single-token test suite")
   ]
 )
 
