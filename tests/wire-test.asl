@@ -5,6 +5,7 @@
       test-wire-payload-roundtrip
       test-wire-encode-decode-envelope
       test-wire-unpack-direct-vs-decompressed
+      test-wire-internal-delimiters
       run-wire-tests]
   :i [(wire :a w)])
 
@@ -63,10 +64,20 @@
       (and (= (w/unpack-wire-frame frame-raw) msg)
            (= (w/unpack-wire-frame frame-comp) msg)))))
 
+(df test-wire-internal-delimiters [] -> Bool
+  :d "Tests that payload with internal quotes and closing parens is parsed without truncation."
+  (let [(msg "(call :tool \"edit\" :args (list \"val)\" \"foo\"))")
+        (frame (w/create-wire-frame (w/codec-asn-text) msg false))
+        (encoded (w/encode-wire-frame frame))
+        (decoded (w/decode-wire-frame encoded))]
+    (= (w/unpack-wire-frame decoded) msg)))
+
 (df run-wire-tests [] -> Bool
   :d "Runs all wire protocol unit tests."
   (and (test-wire-small-payload-uncompressed)
        (test-wire-large-payload-compressed)
        (test-wire-payload-roundtrip)
        (test-wire-encode-decode-envelope)
-       (test-wire-unpack-direct-vs-decompressed)))
+       (test-wire-unpack-direct-vs-decompressed)
+       (test-wire-internal-delimiters)))
+

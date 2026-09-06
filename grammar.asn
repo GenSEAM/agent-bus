@@ -117,6 +117,8 @@
           :rationale "Verifies serialization and deserialization of wire envelopes")
     (:sym :name "test-wire-unpack-direct-vs-decompressed" :kind :fn :tokens 6
           :rationale "Verifies transparent unpacking across both raw and compressed wire frames")
+    (:sym :name "test-wire-internal-delimiters" :kind :fn :tokens 4
+          :rationale "Verifies that payload with internal quotes and parens parses without truncation")
     (:sym :name "run-wire-tests" :kind :fn :tokens 3
           :rationale "Runs complete unit test suite for wire protocol and compression framing")
 

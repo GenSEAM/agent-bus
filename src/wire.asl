@@ -105,11 +105,10 @@
     (let [(payload (mt data-idx
                      ((none) trimmed)
                      ((some d)
-                      (let [(after (option-or (string-slice trimmed (+ d 7) (string-length trimmed)) ""))
-                            (end-idx (string-index-of after "\")"))]
-                        (mt end-idx
-                          ((none) after)
-                          ((some e) (option-or (string-slice after 0 e) after)))))))]
+                      (let [(after (option-or (string-slice trimmed (+ d 7) (string-length trimmed)) ""))]
+                        (if (string-ends-with? after "\")")
+                            (option-or (string-slice after 0 (- (string-length after) 2)) after)
+                            after)))))]
       (WireFrame
         :version 1
         :codec (if is-binary (codec-asb-binary) (codec-asn-text))
