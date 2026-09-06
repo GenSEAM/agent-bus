@@ -119,7 +119,53 @@
           :rationale "Verifies transparent unpacking across both raw and compressed wire frames")
     (:sym :name "run-wire-tests" :kind :fn :tokens 3
           :rationale "Runs complete unit test suite for wire protocol and compression framing")
+
+    ;; Phase 34 Swarm Presence, Negotiation & External Bridge Symbols
+    (:sym :name "AgentStatus" :kind :type :tokens 2)
+    (:sym :name "SwarmPeer" :kind :type :tokens 2)
+    (:sym :name "SwarmRoom" :kind :type :tokens 2)
+    (:sym :name "NegotiationKind" :kind :type :tokens 2)
+    (:sym :name "NegotiationOffer" :kind :type :tokens 2)
+    (:sym :name "ExternalToolCommand" :kind :type :tokens 1)
+    (:sym :name "propose-task" :kind :fn :tokens 2)
+    (:sym :name "accept-task" :kind :fn :tokens 2)
+    (:sym :name "decline-task" :kind :fn :tokens 2)
+    (:sym :name "create-swarm-room" :kind :fn :tokens 3
+          :rationale "Initializes empty swarm coordination room")
+    (:sym :name "join-swarm-room" :kind :fn :tokens 3
+          :rationale "Registers or updates peer in swarm room")
+    (:sym :name "leave-swarm-room" :kind :fn :tokens 3
+          :rationale "Removes peer from swarm room roster")
+    (:sym :name "list-room-peers" :kind :fn :tokens 3
+          :rationale "Returns active registered peers in room")
+    (:sym :name "find-peer-in-room" :kind :fn :tokens 4
+          :rationale "Finds registered room peer by unique identifier")
+    (:sym :name "format-presence-roster" :kind :fn :tokens 3
+          :rationale "Formats markdown table representation of room peers")
+    (:sym :name "bridge-connect-external" :kind :fn :tokens 3
+          :rationale "Registers external agent into ASL bus presence")
+    (:sym :name "format-external-tool-schema" :kind :fn :tokens 4
+          :rationale "Renders single JSON schema for external agents")
+    (:sym :name "dispatch-external-command" :kind :fn :tokens 3
+          :rationale "Dispatches external agent commands on bus")
+    (:sym :name "test-room-create-and-join" :kind :fn :tokens 5
+          :rationale "Verifies room creation and peer registration")
+    (:sym :name "test-room-peer-lookup" :kind :fn :tokens 4
+          :rationale "Verifies peer lookup by agent identifier")
+    (:sym :name "test-room-leave" :kind :fn :tokens 3
+          :rationale "Verifies peer removal on room departure")
+    (:sym :name "test-negotiation-handshake-accept" :kind :fn :tokens 4
+          :rationale "Verifies task proposal and acceptance handshake")
+    (:sym :name "test-negotiation-handshake-decline" :kind :fn :tokens 4
+          :rationale "Verifies task proposal rejection with reason")
+    (:sym :name "test-format-presence-roster" :kind :fn :tokens 4
+          :rationale "Verifies formatting of presence roster table")
+    (:sym :name "test-bridge-external-dispatch" :kind :fn :tokens 4
+          :rationale "Verifies external tool dispatch and schema")
+    (:sym :name "run-presence-tests" :kind :fn :tokens 3
+          :rationale "Runs complete unit test suite for presence and bridge")
   ]
 )
+
 
 
