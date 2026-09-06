@@ -1,9 +1,9 @@
 (module asl-bus/cluster-test
-  :d "Unit verification test suite for Cluster-Native Mesh, Worker Pools, and Single-Token DAG Dispatch."
+  :d "Unit verification test suite for Cluster-Native Mesh, Worker Pools, and Unambiguous DAG Dispatch."
   :x [test-worker-idle-state
       test-pool-registration-and-selection
-      test-single-tkn-compaction
-      test-pack-dag-single-tkn
+      test-normalize-keys
+      test-pack-dag-keys
       test-dispatch-and-receipt-lifecycle
       run-cluster-tests]
   :i [(cluster :a c)])
@@ -62,11 +62,11 @@
          (= (.-id (option-unwrap coder-opt)) "worker-qwen-1")
          (= (.-id (option-unwrap vision-opt)) "worker-vision-1"))))
 
-(df test-single-tkn-compaction [] -> Bool
+(df test-normalize-keys [] -> Bool
   :d "Verifies rational unambiguous normalization without state and status collision."
   (let [(raw "(:node :sender \"orchestrator\" :target \"worker-1\" :payload \"test\" :status :pass :state :active :dependencies [\"t0\"])")
-        (normalized (c/pack-tkn raw))
-        (restored (c/unpack-tkn normalized))]
+        (normalized (c/pack-keys raw))
+        (restored (c/unpack-keys normalized))]
     (and (string-contains? normalized ":from \"orchestrator\"")
          (string-contains? normalized ":to \"worker-1\"")
          (string-contains? normalized ":deps [\"t0\"]")
@@ -74,7 +74,7 @@
          (string-contains? normalized ":state :active")
          (= restored raw))))
 
-(df test-pack-dag-single-tkn [] -> Bool
+(df test-pack-dag-keys [] -> Bool
   :d "Tests compacting a DAG task node definition into a canonical expression."
   (let [(deps (list "task-setup" "task-schema"))
         (premises (list "premise-airgap-active"))
@@ -100,16 +100,16 @@
         (rc-frame (c/make-receipt "frame-9002" "worker-qwen-1" "leader-node" "task-42" 18 55))]
     (and (= (.-from dispatch-frame) "leader-node")
          (= (.-to dispatch-frame) "worker-qwen-1")
-         (string-contains? (.-tkn-single dispatch-frame) ":task :title \"Patch AST\"")
+         (string-contains? (.-wire-payload dispatch-frame) ":task :title \"Patch AST\"")
          (= (.-from rc-frame) "worker-qwen-1")
          (= (.-to rc-frame) "leader-node")
-         (string-contains? (.-tkn-single rc-frame) ":receipt :node \"worker-qwen-1\"")
-         (string-contains? (.-tkn-single rc-frame) ":status :pass"))))
+         (string-contains? (.-wire-payload rc-frame) ":receipt :node \"worker-qwen-1\"")
+         (string-contains? (.-wire-payload rc-frame) ":status :pass"))))
 
 (df run-cluster-tests [] -> Bool
   :d "Executes all cluster mesh and single-token DAG dispatch tests."
   (and (test-worker-idle-state)
        (test-pool-registration-and-selection)
-       (test-single-tkn-compaction)
-       (test-pack-dag-single-tkn)
+       (test-normalize-keys)
+       (test-pack-dag-keys)
        (test-dispatch-and-receipt-lifecycle)))

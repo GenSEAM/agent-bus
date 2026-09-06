@@ -1,12 +1,12 @@
 (module asl-bus/cluster
-  :d "Cluster-Native Multi-Node Agent Swarm Mesh, Remote Worker Pool & Single-Token DAG Dispatch."
+  :d "Cluster-Native Multi-Node Agent Swarm Mesh, Remote Worker Pool & Unambiguous DAG Dispatch."
   :x [NodeState
       WorkerNode
       ClusterPool
       OpKind
       ClusterFrame
-      pack-tkn
-      unpack-tkn
+      pack-keys
+      unpack-keys
       pack-dag
       pool-create
       pool-add
@@ -48,7 +48,7 @@
   (:f op OpKind "Cluster operation verb")
   (:f task-id Str "Unique DAG task identifier")
   (:f payload Str "Arbitrary payload string")
-  (:f tkn-single Str "Dense single-token ASN payload"))
+  (:f wire-payload Str "Canonical unambiguous ASN payload"))
 
 (df worker-idle? [(w WorkerNode)] -> Bool
   :d "Returns true if worker is currently in idle state."
@@ -56,25 +56,25 @@
     ((state-idle) true)
     (_ false)))
 
-(df pack-tkn [(raw Str)] -> Str
-  :d "Applies rational unambiguous normalization: standardizes verbose keys into canonical single-token identifiers without collision."
+(df pack-keys [(raw Str)] -> Str
+  :d "Applies rational unambiguous normalization: standardizes verbose keys into canonical identifiers without collision."
   (let [(s1 (string-replace raw ":dependencies" ":deps"))
         (s2 (string-replace s1 ":sender" ":from"))
         (s3 (string-replace s2 ":target" ":to"))]
     s3))
 
-(df unpack-tkn [(compacted Str)] -> Str
+(df unpack-keys [(normalized Str)] -> Str
   :d "Expands normalized keys back into legacy verbose keys where required."
-  (let [(s1 (string-replace compacted ":deps" ":dependencies"))
+  (let [(s1 (string-replace normalized ":deps" ":dependencies"))
         (s2 (string-replace s1 ":from" ":sender"))
         (s3 (string-replace s2 ":to" ":target"))]
     s3))
 
 (df pack-dag [(task-id Str) (title Str) (deps (List Str)) (premises (List Str))] -> Str
-  :d "Formats a DAG task node into a canonical single-token ASN expression preserving explicit state."
+  :d "Formats a DAG task node into a canonical ASN expression preserving explicit state."
   (let [(d-count (list-length deps))
         (p-count (list-length premises))]
-    (pack-tkn (str "(:node :id \"" task-id "\" :title \"" title "\" :deps " (int-to-str d-count) " :premises " (int-to-str p-count) " :state :pending)"))))
+    (pack-keys (str "(:node :id \"" task-id "\" :title \"" title "\" :deps " (int-to-str d-count) " :premises " (int-to-str p-count) " :state :pending)"))))
 
 (df pool-create [] -> ClusterPool
   :d "Creates an empty cluster worker pool."
@@ -96,7 +96,7 @@
       (some (list-head matches)))))
 
 (df dispatch-task [(frame-id Str) (from-node Str) (worker WorkerNode) (task-id Str) (dag-payload Str)] -> ClusterFrame
-  :d "Dispatches a DAG task to a remote worker node with single-token compaction."
+  :d "Dispatches a DAG task to a remote worker node with normalized canonical keys."
   (ClusterFrame
     :id frame-id
     :from from-node
@@ -104,12 +104,11 @@
     :op (op-exec)
     :task-id task-id
     :payload dag-payload
-    :tkn-single (pack-tkn dag-payload)))
+    :wire-payload (pack-keys dag-payload)))
 
 (df make-receipt [(frame-id Str) (worker-id Str) (target-node Str) (task-id Str) (diff-lines I64) (gate-ms I64)] -> ClusterFrame
-  :d "Mints a single-token completion receipt frame from a completed worker task."
-  (let [(raw-receipt (str "(:receipt :node \"" worker-id "\" :task \"" task-id "\" :status :pass :action \"ast-patch\" :diff " (int-to-str diff-lines) " :gate-ms " (int-to-str gate-ms) ")"))
-        (compact-rc (pack-tkn raw-receipt))]
+  :d "Mints a canonical completion receipt frame with explicit status and metrics."
+  (let [(raw-receipt (str "(:receipt :node \"" worker-id "\" :task \"" task-id "\" :status :pass :action \"ast-patch\" :diff " (int-to-str diff-lines) " :gate-ms " (int-to-str gate-ms) ")"))]
     (ClusterFrame
       :id frame-id
       :from worker-id
@@ -117,4 +116,4 @@
       :op (op-rc)
       :task-id task-id
       :payload raw-receipt
-      :tkn-single compact-rc)))
+      :wire-payload raw-receipt)))

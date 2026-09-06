@@ -167,14 +167,14 @@
     (:sym :name "run-presence-tests" :kind :fn :tokens 3
           :rationale "Runs complete unit test suite for presence and bridge")
 
-    ;; Cluster Swarm & Single-Token DAG Dispatch Symbols
+    ;; Cluster Swarm & Canonical Unambiguous DAG Dispatch Symbols
     (:sym :name "NodeState" :kind :type :tokens 1)
     (:sym :name "WorkerNode" :kind :type :tokens 1)
     (:sym :name "ClusterPool" :kind :type :tokens 1)
     (:sym :name "OpKind" :kind :type :tokens 1)
     (:sym :name "ClusterFrame" :kind :type :tokens 1)
-    (:sym :name "pack-tkn" :kind :fn :tokens 2)
-    (:sym :name "unpack-tkn" :kind :fn :tokens 2)
+    (:sym :name "pack-keys" :kind :fn :tokens 2)
+    (:sym :name "unpack-keys" :kind :fn :tokens 2)
     (:sym :name "pack-dag" :kind :fn :tokens 2)
     (:sym :name "pool-create" :kind :fn :tokens 2)
     (:sym :name "pool-add" :kind :fn :tokens 2)
@@ -186,14 +186,14 @@
           :rationale "Verifies worker idle state and health")
     (:sym :name "test-pool-registration-and-selection" :kind :fn :tokens 5
           :rationale "Verifies cluster pool registration and worker selection")
-    (:sym :name "test-single-tkn-compaction" :kind :fn :tokens 4
-          :rationale "Verifies single-token ASN dictionary compaction")
-    (:sym :name "test-pack-dag-single-tkn" :kind :fn :tokens 5
-          :rationale "Verifies compact single-token DAG task formatting")
+    (:sym :name "test-normalize-keys" :kind :fn :tokens 3
+          :rationale "Verifies canonical key normalization without state and status collision")
+    (:sym :name "test-pack-dag-keys" :kind :fn :tokens 4
+          :rationale "Verifies compact canonical DAG task formatting")
     (:sym :name "test-dispatch-and-receipt-lifecycle" :kind :fn :tokens 5
           :rationale "Verifies cluster dispatch and receipt lifecycle")
     (:sym :name "run-cluster-tests" :kind :fn :tokens 3
-          :rationale "Runs complete cluster mesh and single-token test suite")
+          :rationale "Runs complete cluster mesh and unambiguous dispatch test suite")
   ]
 )
 
