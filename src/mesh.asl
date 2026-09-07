@@ -4,7 +4,9 @@
       create-routing-table register-mesh-node
       route-packet is-node-alive
       TaskConstraint TaskContract
-      make-task-constraint make-task-contract delegate-contract]
+      make-task-constraint make-task-contract delegate-contract
+      ControlSignalFrame make-control-signal format-control-signal
+      ComputeTier get-compute-tier-name]
   :i [])
 
 (dfe TransportProtocol
@@ -75,3 +77,37 @@
 (df delegate-contract [(contract TaskContract) (target-role Str)] -> Str
   :d "Dispatches a task contract to an assigned role within the mesh."
   (str "(:contract-dispatch :task-id \"" (.-task-id contract) "\" :role \"" target-role "\" :mode \"" (.-delegation-mode contract) "\")"))
+
+(dfs ControlSignalFrame
+  (:f signal-type Str "ping | lease | ack | dispatch | receipt")
+  (:f task-id Str "Unique contract ID")
+  (:f target-cluster Str "local | browser-edge | remote-gpu")
+  (:f vfs-descriptor-uri Str "mem://vfs/... resident RAM pointer")
+  (:f payload Str "Compact S-expression metadata"))
+
+(df make-control-signal [(signal-type Str) (task-id Str) (target-cluster Str) (vfs-descriptor-uri Str) (payload Str)] -> ControlSignalFrame
+  :d "Constructs a validated control plane signal frame for cross-cluster delegation."
+  (ControlSignalFrame
+    :signal-type signal-type
+    :task-id task-id
+    :target-cluster target-cluster
+    :vfs-descriptor-uri vfs-descriptor-uri
+    :payload payload))
+
+(df format-control-signal [(frame ControlSignalFrame)] -> Str
+  :d "Serializes control signal frame into compact wire format under 80 tokens."
+  (str "(:signal \"" (.-signal-type frame) "\" :task-id \"" (.-task-id frame) "\" :cluster \"" (.-target-cluster frame) "\" :vfs \"" (.-vfs-descriptor-uri frame) "\" :data " (.-payload frame) ")"))
+
+(dfe ComputeTier
+  (:c tier-0-deterministic [] "Deterministic ripgrep/AWK/syntax tools under 1ms")
+  (:c tier-1-edge-mediator [] "Edge SLM on WebGPU DOM accessibility tree 15-50ms")
+  (:c tier-2-workhorse [] "Gemma 31B/Haiku sub-second workhorse 400-900ms")
+  (:c tier-3-frontier-reasoning [] "Frontier reasoning Claude 3.5 Sonnet/O1 2-8s"))
+
+(df get-compute-tier-name [(tier ComputeTier)] -> Str
+  :d "Returns canonical string descriptor of compute tier."
+  (mt tier
+    ((tier-0-deterministic) "tier-0-deterministic")
+    ((tier-1-edge-mediator) "tier-1-edge-mediator")
+    ((tier-2-workhorse) "tier-2-workhorse")
+    ((tier-3-frontier-reasoning) "tier-3-frontier-reasoning")))

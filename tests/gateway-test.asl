@@ -7,8 +7,10 @@
       test-lcs-grounding
       test-format-gateway-verdict
       test-anthropic-adapter
+      test-remote-mesh-timeout-unreachable
+      test-control-plane-token-economy
       run-tests]
-  :i [(gateway :a gw)])
+  :i [(gateway :a gw) (mesh :a m)])
 
 "run: (run-tests)"
 
@@ -85,12 +87,36 @@
          (and (string-contains? resp "\"type\": \"message\"")
               (string-contains? resp "\"type\": \"tool_use\"")))))
 
+(df test-remote-mesh-timeout-unreachable [] -> Bool
+  :d "Verifies gateway emits structured remote-unreachable diagnostic on unreachable cluster."
+  (let [(contract (m/make-task-contract "task-101" "Process remote telemetry" (list) (list "Exit 0") "mesh" (list "coder")))
+        (res-unreachable (gw/proxy-contract-to-mesh contract "remote-gpu" false))
+        (res-reachable (gw/proxy-contract-to-mesh contract "browser-edge" true))]
+    (and (string-contains? res-unreachable ":remote-unreachable")
+         (and (string-contains? res-unreachable ":cluster \"remote-gpu\"")
+              (and (string-contains? res-unreachable ":fallback \"local-vfs\"")
+                   (and (string-contains? res-unreachable ":preserved-contract \"task-101\"")
+                        (and (string-contains? res-reachable ":control-dispatch")
+                             (and (string-contains? res-reachable ":cluster \"browser-edge\"")
+                                  (string-contains? res-reachable ":status \"proxied\"")))))))))
+
+(df test-control-plane-token-economy [] -> Bool
+  :d "Verifies that control plane dispatch frames stay compact and under token budget ceiling."
+  (let [(contract (m/make-task-contract "task-202" "Run AST indexing" (list) (list "Pass") "mesh" (list "indexer")))
+        (dispatch-str (gw/proxy-contract-to-mesh contract "remote-gpu" true))]
+    (and (< (string-length dispatch-str) 200)
+         (string-contains? dispatch-str ":control-dispatch"))))
+
 (df run-tests [] -> Bool
-  :d "Executes full L7 cognitive gateway test suite."
-  (and (test-demux-channels)
-       (and (test-quarantine-reasoning)
-            (and (test-verbal-esh-rejection)
-                 (and (test-verified-execution-allowed)
-                      (and (test-lcs-grounding)
-                           (and (test-format-gateway-verdict)
-                                (test-anthropic-adapter))))))))
+  :d "Executes full L7 cognitive gateway test suite with strict falsification assertions."
+  (do
+    (assert (test-demux-channels))
+    (assert (test-quarantine-reasoning))
+    (assert (test-verbal-esh-rejection))
+    (assert (test-verified-execution-allowed))
+    (assert (test-lcs-grounding))
+    (assert (test-format-gateway-verdict))
+    (assert (test-anthropic-adapter))
+    (assert (test-remote-mesh-timeout-unreachable))
+    (assert (test-control-plane-token-economy))
+    true))

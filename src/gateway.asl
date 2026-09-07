@@ -9,8 +9,9 @@
       inspect-gateway-turn
       format-gateway-verdict
       adapt-anthropic-request
-      format-anthropic-response]
-  :i [])
+      format-anthropic-response
+      proxy-contract-to-mesh]
+  :i [(mesh :a mesh)])
 
 (dfe GatewayChannel
   (:c channel-ui [] "Channel A: direct conversational output")
@@ -171,3 +172,9 @@
             (let [(tc (first tools))]
               (str "{\"id\": \"msg_asl\", \"type\": \"message\", \"role\": \"assistant\", \"model\": \"" model "\", \"content\": [{\"type\": \"text\", \"text\": \"" (string-replace content "\"" "\\\"") "\"}, {\"type\": \"tool_use\", \"id\": \"call_asl\", \"name\": \"tool\", \"input\": {\"call\": \"" (string-replace tc "\"" "\\\"") "\"}}]}"))))
       (str "{\"id\": \"msg_err\", \"type\": \"error\", \"error\": {\"type\": \"gateway_rejection\", \"message\": \"" (.-rejection-reason verdict) "\"}}")))
+
+(df proxy-contract-to-mesh [(contract mesh/TaskContract) (target-cluster Str) (is-reachable Bool)] -> Str
+  :d "Proxies a TaskContract to target cluster or emits structured remote-unreachable diagnostic when unreachable."
+  (if is-reachable
+      (str "(:control-dispatch :task-id \"" (.-task-id contract) "\" :cluster \"" target-cluster "\" :vfs \"mem://vfs/" (.-task-id contract) "\" :status \"proxied\")")
+      (str "(:remote-unreachable :cluster \"" target-cluster "\" :fallback \"local-vfs\" :preserved-contract \"" (.-task-id contract) "\")")))

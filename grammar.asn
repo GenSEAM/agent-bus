@@ -273,6 +273,30 @@
     (:sym :name "delegate-contract" :kind :fn :tokens 2)
     (:sym :name "test-task-contract-delegation" :kind :fn :tokens 4
           :rationale "Unit test verifying task contract construction and delegation dispatch frame generation")
+
+    ;; Phase 272 Multi-Mesh Federation & Gateway Proxy Resilience Symbols
+    (:sym :name "ControlSignalFrame" :kind :type :tokens 1)
+    (:sym :name "ComputeTier" :kind :type :tokens 1)
+    (:sym :name "tier-2-workhorse" :kind :fn :tokens 2
+          :rationale "Sub-second workhorse compute tier descriptor for high-throughput model dispatch")
+    (:sym :name "make-control-signal" :kind :fn :tokens 3
+          :rationale "Constructs a validated control plane signal frame for cross-cluster delegation")
+    (:sym :name "format-control-signal" :kind :fn :tokens 3
+          :rationale "Serializes control signal frame into compact wire format under 80 tokens")
+    (:sym :name "tier-0-deterministic" :kind :fn :tokens 3
+          :rationale "Deterministic compute tier descriptor for ripgrep and syntax verification")
+    (:sym :name "tier-1-edge-mediator" :kind :fn :tokens 3
+          :rationale "Edge compute tier descriptor for WebGPU SLM DOM and accessibility tree processing")
+    (:sym :name "tier-3-frontier-reasoning" :kind :fn :tokens 3
+          :rationale "Frontier reasoning compute tier descriptor for complex reasoning and circuit breaker escalation")
+    (:sym :name "get-compute-tier-name" :kind :fn :tokens 4
+          :rationale "Returns canonical string descriptor representation for compute tier enum")
+    (:sym :name "proxy-contract-to-mesh" :kind :fn :tokens 4
+          :rationale "Proxies task contracts across federated mesh clusters with reachability and timeout fallback")
+    (:sym :name "test-remote-mesh-timeout-unreachable" :kind :fn :tokens 5
+          :rationale "Unit test verifying gateway emits structured remote-unreachable diagnostic on unreachable cluster")
+    (:sym :name "test-control-plane-token-economy" :kind :fn :tokens 5
+          :rationale "Unit test verifying control plane dispatch frames stay compact and well under the 80-token ceiling")
   ]
 )
 
