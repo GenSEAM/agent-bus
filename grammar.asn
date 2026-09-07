@@ -202,6 +202,38 @@
           :rationale "Verifies agent node liveness check")
     (:sym :name "test-packet-routing" :kind :fn :tokens 3
           :rationale "Verifies peer packet dispatch frame routing")
+
+    ;; Phase 176 Bus Transport Wire Framing & Session Symbols
+    (:sym :name "TransportFrameType" :kind :type :tokens 2)
+    (:sym :name "TransportState" :kind :type :tokens 2)
+    (:sym :name "TransportEnvelope" :kind :type :tokens 2)
+    (:sym :name "TransportSession" :kind :type :tokens 2)
+    (:sym :name "make-transport-envelope" :kind :fn :tokens 3
+          :rationale "Constructs a validated transport envelope for wire transmission")
+    (:sym :name "init-transport-session" :kind :fn :tokens 3
+          :rationale "Initializes an idle duplex transport session bound to a remote peer")
+    (:sym :name "session-record-sent" :kind :fn :tokens 3
+          :rationale "Records outbound frame transmission and updates sequence and counter metrics")
+    (:sym :name "session-record-received" :kind :fn :tokens 3
+          :rationale "Records inbound frame arrival and increments reception metrics")
+    (:sym :name "session-set-state" :kind :fn :tokens 3
+          :rationale "Transitions the transport session into a new connection lifecycle state")
+    (:sym :name "is-session-active?" :kind :fn :tokens 3
+          :rationale "Predicate checking whether transport session is in connected active state")
+    (:sym :name "format-frame-header" :kind :fn :tokens 3
+          :rationale "Formats transport envelope metadata into a compact wire transmission header line")
+    (:sym :name "validate-transport-envelope" :kind :fn :tokens 3
+          :rationale "Validates transport envelope structural integrity and non-negative sequence invariants")
+    (:sym :name "test-envelope-creation" :kind :fn :tokens 3
+          :rationale "Unit test verifying transport envelope field assignment and integrity")
+    (:sym :name "test-session-lifecycle" :kind :fn :tokens 3
+          :rationale "Unit test verifying transport session state transitions and active predicate")
+    (:sym :name "test-session-counters" :kind :fn :tokens 3
+          :rationale "Unit test verifying sent and received frame counters and sequence tracking")
+    (:sym :name "test-frame-header-formatting" :kind :fn :tokens 4
+          :rationale "Unit test verifying compact wire transmission header line formatting")
+    (:sym :name "test-envelope-validation" :kind :fn :tokens 3
+          :rationale "Unit test verifying envelope invariant checking across valid and invalid envelopes")
   ]
 )
 
