@@ -33,27 +33,80 @@
   :d "Returns true if the wire frame is compressed."
   (.-compressed frame))
 
+(dfs WireScanState
+  (:f out Str "Accumulated output buffer")
+  (:f cur Str "Current token buffer")
+  (:f in-str Bool "True if currently inside double quotes")
+  (:f esc Bool "True if escape backslash active"))
+
+(df compact-token [(token Str)] -> Str
+  :d "Maps verbose ASN keyword token to compact shorthand marker."
+  (cond
+    ((= token ":sender") ":s")
+    ((= token ":target") ":t")
+    ((= token ":payload") ":p")
+    ((= token ":timestamp") ":ts")
+    ((= token ":room") ":r")
+    ((= token ":status") ":st")
+    ((= token ":capabilities") ":caps")
+    (:else token)))
+
+(df expand-token [(token Str)] -> Str
+  :d "Maps compact shorthand marker to canonical verbose ASN keyword token."
+  (cond
+    ((= token ":s") ":sender")
+    ((= token ":t") ":target")
+    ((= token ":p") ":payload")
+    ((= token ":ts") ":timestamp")
+    ((= token ":r") ":room")
+    ((= token ":st") ":status")
+    ((= token ":caps") ":capabilities")
+    (:else token)))
+
+(df is-delim-char? [(c Str)] -> Bool
+  :d "Returns true if character is a delimiter or whitespace separating ASN tokens."
+  (or (= c " ")
+      (or (= c "\t")
+          (or (= c "\n")
+              (or (= c "\r")
+                  (or (= c "(")
+                      (or (= c ")")
+                          (or (= c "[")
+                              (= c "]")))))))))
+
+(df transform-wire-payload [(raw Str) (mode-compact Bool)] -> Str
+  :d "Walks payload characters applying lexical token replacement outside string literals."
+  (let [(init (WireScanState :out "" :cur "" :in-str false :esc false))
+        (chars (string-chars raw))]
+    (let [(final-state
+           (fold (fn [(st WireScanState) (c Str)] -> WireScanState
+                   (if (.-in-str st)
+                       (if (.-esc st)
+                           (WireScanState :out (str (.-out st) c) :cur "" :in-str true :esc false)
+                           (if (= c "\\")
+                               (WireScanState :out (str (.-out st) c) :cur "" :in-str true :esc true)
+                               (if (= c "\"")
+                                   (WireScanState :out (str (.-out st) c) :cur "" :in-str false :esc false)
+                                   (WireScanState :out (str (.-out st) c) :cur "" :in-str true :esc false))))
+                       (if (= c "\"")
+                           (let [(tok (if mode-compact (compact-token (.-cur st)) (expand-token (.-cur st))))]
+                             (WireScanState :out (str (.-out st) tok c) :cur "" :in-str true :esc false))
+                           (if (is-delim-char? c)
+                               (let [(tok (if mode-compact (compact-token (.-cur st)) (expand-token (.-cur st))))]
+                                 (WireScanState :out (str (.-out st) tok c) :cur "" :in-str false :esc false))
+                               (WireScanState :out (.-out st) :cur (str (.-cur st) c) :in-str false :esc false)))))
+                 init
+                 chars))]
+      (let [(final-tok (if mode-compact (compact-token (.-cur final-state)) (expand-token (.-cur final-state))))]
+        (str (.-out final-state) final-tok)))))
+
 (df compact-wire-payload [(raw Str)] -> Str
   :d "Applies dictionary-trained token compaction replacing verbose S-expression heads with compact markers."
-  (let [(s1 (string-replace raw ":sender" ":s"))
-        (s2 (string-replace s1 ":target" ":t"))
-        (s3 (string-replace s2 ":payload" ":p"))
-        (s4 (string-replace s3 ":timestamp" ":ts"))
-        (s5 (string-replace s4 ":room" ":r"))
-        (s6 (string-replace s5 ":status" ":st"))
-        (s7 (string-replace s6 ":capabilities" ":caps"))]
-    s7))
+  (transform-wire-payload raw true))
 
 (df expand-wire-payload [(compacted Str)] -> Str
   :d "Inverts dictionary compaction, restoring canonical ASN S-expression heads."
-  (let [(s1 (string-replace compacted ":caps" ":capabilities"))
-        (s2 (string-replace s1 ":st" ":status"))
-        (s3 (string-replace s2 ":r" ":room"))
-        (s4 (string-replace s3 ":ts" ":timestamp"))
-        (s5 (string-replace s4 ":p" ":payload"))
-        (s6 (string-replace s5 ":t" ":target"))
-        (s7 (string-replace s6 ":s" ":sender"))]
-    s7))
+  (transform-wire-payload compacted false))
 
 (df create-wire-frame [(codec CodecKind) (payload Str) (enable-compress Bool)] -> WireFrame
   :d "Constructs an adaptive wire frame. Payloads < 128 bytes are sent uncompressed; larger payloads are compacted."
@@ -93,29 +146,51 @@
          " :orig-len " (show (.-uncompressed-bytes frame))
          " :data \"" (.-payload frame) "\")")))
 
+(df extract-envelope-orig-len [(header Str)] -> (Option I64)
+  :d "Extracts the :orig-len integer from the wire envelope header."
+  (let [(idx (string-index-of header ":orig-len "))]
+    (mt idx
+      ((none) (none))
+      ((some i)
+       (let [(sub (option-or (string-slice header (+ i 10) (string-length header)) ""))
+             (sp-idx (string-index-of sub " "))]
+         (let [(num-str (mt sp-idx
+                          ((none) (string-trim sub))
+                          ((some sp) (option-or (string-slice sub 0 sp) sub))))]
+           (string-to-int64 (string-trim num-str))))))))
+
 (df decode-wire-frame [(raw Str)] -> WireFrame
   :d "Parses a serialized wire envelope string into a WireFrame structure."
   (let [(trimmed (string-trim raw))
-        (is-comp (string-contains? trimmed ":compressed true"))
-        (is-binary (string-contains? trimmed ":codec \"asb-binary\""))
-        (is-rle (string-contains? trimmed ":algo \"rle\""))
-        (is-zstd (string-contains? trimmed ":algo \"zstd-dict\""))
-        ;; Extract :data payload
         (data-idx (string-index-of trimmed ":data \""))]
-    (let [(payload (mt data-idx
-                     ((none) trimmed)
-                     ((some d)
-                      (let [(after (option-or (string-slice trimmed (+ d 7) (string-length trimmed)) ""))]
-                        (if (string-ends-with? after "\")")
+    (mt data-idx
+      ((none)
+       (WireFrame
+         :version 1
+         :codec (codec-asn-text)
+         :compressed false
+         :algorithm (algo-none)
+         :uncompressed-bytes (string-length trimmed)
+         :payload trimmed))
+      ((some d)
+       (let [(header (option-or (string-slice trimmed 0 d) ""))
+             (after (option-or (string-slice trimmed (+ d 7) (string-length trimmed)) ""))]
+         (let [(payload (if (string-ends-with? after "\")")
                             (option-or (string-slice after 0 (- (string-length after) 2)) after)
-                            after)))))]
-      (WireFrame
-        :version 1
-        :codec (if is-binary (codec-asb-binary) (codec-asn-text))
-        :compressed is-comp
-        :algorithm (if is-zstd (algo-zstd-dict) (if is-rle (algo-rle) (algo-none)))
-        :uncompressed-bytes (string-length payload)
-        :payload payload))))
+                            after))
+               (is-comp (string-contains? header ":compressed true"))
+               (is-binary (string-contains? header ":codec \"asb-binary\""))
+               (is-rle (string-contains? header ":algo \"rle\""))
+               (is-zstd (string-contains? header ":algo \"zstd-dict\""))
+               (orig-len-opt (extract-envelope-orig-len header))]
+           (let [(orig-len (option-or orig-len-opt (string-length payload)))]
+             (WireFrame
+               :version 1
+               :codec (if is-binary (codec-asb-binary) (codec-asn-text))
+               :compressed is-comp
+               :algorithm (if is-zstd (algo-zstd-dict) (if is-rle (algo-rle) (algo-none)))
+               :uncompressed-bytes orig-len
+               :payload payload))))))))
 
 (df unpack-wire-frame [(frame WireFrame)] -> Str
   :d "Unpacks wire payload: if compressed, decompresses/expands first; otherwise decodes directly."
