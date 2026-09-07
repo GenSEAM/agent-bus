@@ -1,0 +1,91 @@
+(module asl-agent-bus/tool-plane-test
+  :d "Unit tests for Agent Bus Tool Control Plane Router and Multi-Repo Scoping."
+  :x [test-router-creation
+      test-router-repo-scoping
+      test-router-agent-authorization
+      test-router-safety-ceiling
+      test-router-secret-masking
+      test-router-runbook-and-guidance
+      run-tests]
+  :i [(tool_plane :a tp)
+      (asl-agent-bus/tool-plane :a tpr)])
+
+(df test-router-creation [] -> Bool
+  :d "Verifies router construction with tool list."
+  (let [(t1 (tp/make-tool-descriptor "t1" "Tool 1" "doc" "g1" (list "*") (list "*") (tp/safety-safe) "cmd1" (list) (map-empty) (list)))
+        (router (tpr/make-tool-router (list t1)))]
+    (= (list-len (.-tools router)) 1)))
+
+(df test-router-repo-scoping [] -> Bool
+  :d "Verifies multi-repo scope isolation when routing tools."
+  (let [(t-asl (tp/make-tool-descriptor "t-asl" "ASL Tool" "doc" "g" (list "asl") (list "*") (tp/safety-safe) "asl" (list) (map-empty) (list)))
+        (t-crawl (tp/make-tool-descriptor "t-crawl" "Crawler Tool" "doc" "g" (list "crawler") (list "*") (tp/safety-safe) "crawl" (list) (map-empty) (list)))
+        (t-all (tp/make-tool-descriptor "t-all" "Global Tool" "doc" "g" (list "*") (list "*") (tp/safety-safe) "all" (list) (map-empty) (list)))
+        (router (tpr/make-tool-router (list t-asl t-crawl t-all)))
+        (ctx-asl (tp/make-scope-context "asl" "implementer" (tp/safety-dangerous)))
+        (ctx-crawl (tp/make-scope-context "crawler" "implementer" (tp/safety-dangerous)))
+        (routed-asl (tpr/route-tools router ctx-asl false))
+        (routed-crawl (tpr/route-tools router ctx-crawl false))]
+    (and (= (list-len routed-asl) 2)
+         (= (list-len routed-crawl) 2))))
+
+(df test-router-agent-authorization [] -> Bool
+  :d "Verifies agent role permissions enforcement when routing tools."
+  (let [(t-dev (tp/make-tool-descriptor "t-dev" "Dev Tool" "doc" "g" (list "*") (list "implementer") (tp/safety-safe) "dev" (list) (map-empty) (list)))
+        (t-rev (tp/make-tool-descriptor "t-rev" "Review Tool" "doc" "g" (list "*") (list "reviewer") (tp/safety-safe) "rev" (list) (map-empty) (list)))
+        (t-pub (tp/make-tool-descriptor "t-pub" "Public Tool" "doc" "g" (list "*") (list "*") (tp/safety-safe) "pub" (list) (map-empty) (list)))
+        (router (tpr/make-tool-router (list t-dev t-rev t-pub)))
+        (ctx-impl (tp/make-scope-context "asl" "implementer" (tp/safety-dangerous)))
+        (ctx-rev (tp/make-scope-context "asl" "reviewer" (tp/safety-dangerous)))
+        (routed-impl (tpr/route-tools router ctx-impl false))
+        (routed-rev (tpr/route-tools router ctx-rev false))]
+    (and (= (list-len routed-impl) 2)
+         (= (list-len routed-rev) 2))))
+
+(df test-router-safety-ceiling [] -> Bool
+  :d "Verifies that dangerous tools are excluded when context safety ceiling is guarded or safe."
+  (let [(t-safe (tp/make-tool-descriptor "ts" "Safe" "d" "g" (list "*") (list "*") (tp/safety-safe) "s" (list) (map-empty) (list)))
+        (t-guard (tp/make-tool-descriptor "tg" "Guarded" "d" "g" (list "*") (list "*") (tp/safety-guarded) "g" (list) (map-empty) (list)))
+        (t-dang (tp/make-tool-descriptor "td" "Dangerous" "d" "g" (list "*") (list "*") (tp/safety-dangerous) "d" (list) (map-empty) (list)))
+        (router (tpr/make-tool-router (list t-safe t-guard t-dang)))
+        (ctx-safe (tp/make-scope-context "asl" "implementer" (tp/safety-safe)))
+        (ctx-guard (tp/make-scope-context "asl" "implementer" (tp/safety-guarded)))
+        (ctx-dang (tp/make-scope-context "asl" "implementer" (tp/safety-dangerous)))]
+    (and (= (tpr/count-routed-tools router ctx-safe) 1)
+         (and (= (tpr/count-routed-tools router ctx-guard) 2)
+              (= (tpr/count-routed-tools router ctx-dang) 3)))))
+
+(df test-router-secret-masking [] -> Bool
+  :d "Verifies that secret masking strips secrets on routed descriptors when requested."
+  (let [(sec (tp/make-secret-ref "KEY" "env" "API_KEY" "def"))
+        (env-map (map-set (map-empty) "API_KEY" "secret_value"))
+        (t-sec (tp/make-tool-descriptor "t-sec" "Secured" "doc" "g" (list "*") (list "*") (tp/safety-safe) "cmd" (list) env-map (list sec)))
+        (router (tpr/make-tool-router (list t-sec)))
+        (ctx (tp/make-scope-context "asl" "implementer" (tp/safety-safe)))
+        (masked-tools (tpr/route-tools router ctx true))
+        (masked-t (list-head masked-tools))]
+    (and (= (list-len masked-tools) 1)
+         (and (.-redacted masked-t)
+              (= (list-len (.-secrets masked-t)) 0)))))
+
+(df test-router-runbook-and-guidance [] -> Bool
+  :d "Verifies guidance retrieval and runbook registration/lookup."
+  (let [(t1 (tp/make-tool-descriptor "t-run" "Runner" "doc" "Run only after git status is clean" (list "*") (list "*") (tp/safety-safe) "run" (list) (map-empty) (list)))
+        (rb (tp/make-runbook "rb-01" "Deployment Runbook" (list "step 1" "step 2")))
+        (r0 (tpr/make-tool-router (list t1)))
+        (r1 (tpr/register-tool-runbook r0 "t-run" rb))
+        (guidance (tpr/get-tool-guidance r1 "t-run"))
+        (found-rb (tpr/get-tool-runbook r1 "t-run"))]
+    (and (= guidance "Run only after git status is clean")
+         (mt found-rb
+           ((some b) (= (.-id b) "rb-01"))
+           (_ false)))))
+
+(df run-tests [] -> Bool
+  :d "Executes agent bus tool plane unit test suite."
+  (and (test-router-creation)
+       (and (test-router-repo-scoping)
+            (and (test-router-agent-authorization)
+                 (and (test-router-safety-ceiling)
+                      (and (test-router-secret-masking)
+                           (test-router-runbook-and-guidance)))))))

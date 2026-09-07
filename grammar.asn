@@ -234,6 +234,34 @@
           :rationale "Unit test verifying compact wire transmission header line formatting")
     (:sym :name "test-envelope-validation" :kind :fn :tokens 3
           :rationale "Unit test verifying envelope invariant checking across valid and invalid envelopes")
+
+    ;; Tool Control Plane & Multi-Repo Routing Symbols
+    (:sym :name "ToolRouter" :kind :type :tokens 2)
+    (:sym :name "route-tools" :kind :fn :tokens 2)
+    (:sym :name "make-tool-router" :kind :fn :tokens 3
+          :rationale "Instantiates tool router with registered tool descriptors")
+    (:sym :name "register-tool-runbook" :kind :fn :tokens 3
+          :rationale "Registers operational runbook associated with a specific tool")
+    (:sym :name "get-tool-runbook" :kind :fn :tokens 3
+          :rationale "Retrieves operational runbook for a tool by identifier")
+    (:sym :name "get-tool-guidance" :kind :fn :tokens 3
+          :rationale "Retrieves human and agent operational guidance for a tool")
+    (:sym :name "is-tool-eligible?" :kind :fn :tokens 3
+          :rationale "Evaluates tool eligibility against active repo, agent role, and safety ceiling")
+    (:sym :name "count-routed-tools" :kind :fn :tokens 3
+          :rationale "Counts accessible tools matching scope context")
+    (:sym :name "test-router-creation" :kind :fn :tokens 3
+          :rationale "Unit test verifying tool router creation")
+    (:sym :name "test-router-repo-scoping" :kind :fn :tokens 4
+          :rationale "Unit test verifying multi-repo scope isolation")
+    (:sym :name "test-router-agent-authorization" :kind :fn :tokens 4
+          :rationale "Unit test verifying agent role-based tool authorization")
+    (:sym :name "test-router-safety-ceiling" :kind :fn :tokens 4
+          :rationale "Unit test verifying safety tier ceiling filtering")
+    (:sym :name "test-router-secret-masking" :kind :fn :tokens 4
+          :rationale "Unit test verifying secret redaction for routed tools")
+    (:sym :name "test-router-runbook-and-guidance" :kind :fn :tokens 4
+          :rationale "Unit test verifying tool runbook and operational guidance retrieval")
   ]
 )
 
