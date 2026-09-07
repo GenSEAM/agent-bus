@@ -297,6 +297,58 @@
           :rationale "Unit test verifying gateway emits structured remote-unreachable diagnostic on unreachable cluster")
     (:sym :name "test-control-plane-token-economy" :kind :fn :tokens 5
           :rationale "Unit test verifying control plane dispatch frames stay compact and well under the 80-token ceiling")
+
+    ;; Phase 291 Ambient Perception, Multi-Daemon Discovery & Buffer Mutex Symbols
+    (:sym :name "AmbientFrame" :kind :type :tokens 2)
+    (:sym :name "create-ambient-frame" :kind :fn :tokens 3
+          :rationale "Constructs an AmbientFrame record representing a peer status broadcast")
+    (:sym :name "validate-ambient-frame" :kind :fn :tokens 3
+          :rationale "Validates ambient frame invariants ensuring non-empty peer-id and normalized load")
+    (:sym :name "encode-ambient-asn" :kind :fn :tokens 3
+          :rationale "Serializes an AmbientFrame into compact canonical ASN format strictly under 120 tokens")
+    (:sym :name "DaemonPeer" :kind :type :tokens 2)
+    (:sym :name "PeerRegistry" :kind :type :tokens 2)
+    (:sym :name "make-daemon-peer" :kind :fn :tokens 3
+          :rationale "Constructs a validated DaemonPeer record")
+    (:sym :name "create-peer-registry" :kind :fn :tokens 3
+          :rationale "Initializes an empty peer registry for a workspace hash")
+    (:sym :name "register-daemon-peer" :kind :fn :tokens 3
+          :rationale "Registers or updates a daemon peer in the registry")
+    (:sym :name "find-daemon-peer" :kind :fn :tokens 3
+          :rationale "Finds a registered daemon peer by ID")
+    (:sym :name "detect-workspace-collisions" :kind :fn :tokens 3
+          :rationale "Filters peers matching workspace hash to detect multi-daemon collisions")
+    (:sym :name "BufferLease" :kind :type :tokens 2)
+    (:sym :name "MutexRegistry" :kind :type :tokens 2)
+    (:sym :name "make-buffer-lease" :kind :fn :tokens 3
+          :rationale "Constructs a validated BufferLease record")
+    (:sym :name "create-mutex-registry" :kind :fn :tokens 3
+          :rationale "Initializes an empty distributed buffer mutex registry")
+    (:sym :name "lease-expired?" :kind :fn :tokens 2)
+    (:sym :name "acquire-buffer-lease" :kind :fn :tokens 3
+          :rationale "Attempts to acquire distributed buffer mutex lease with finite TTL")
+    (:sym :name "release-buffer-lease" :kind :fn :tokens 3
+          :rationale "Releases distributed buffer lease if held by requesting peer")
+    (:sym :name "evict-dead-peers" :kind :fn :tokens 3
+          :rationale "Evicts peers whose heartbeat age exceeds ttl threshold")
+    (:sym :name "get-buffer-lease" :kind :fn :tokens 3
+          :rationale "Retrieves active buffer lease for buffer identifier if present")
+    (:sym :name "is-buffer-locked?" :kind :fn :tokens 3
+          :rationale "Returns true if buffer is held under an active unexpired lease")
+    (:sym :name "test-ambient-frame-creation" :kind :fn :tokens 4
+          :rationale "Verifies AmbientFrame construction and field assignments")
+    (:sym :name "test-ambient-frame-validation" :kind :fn :tokens 4
+          :rationale "Verifies validation of valid and invalid ambient frames")
+    (:sym :name "test-ambient-frame-token-economy" :kind :fn :tokens 5
+          :rationale "Verifies ambient frame serializes to compact ASN strictly under 120 tokens")
+    (:sym :name "test-daemon-peer-registration" :kind :fn :tokens 4
+          :rationale "Verifies peer registration and retrieval in peer registry")
+    (:sym :name "test-workspace-collision-detection" :kind :fn :tokens 4
+          :rationale "Verifies detection of multiple active daemons in the same workspace")
+    (:sym :name "test-buffer-lease-lifecycle" :kind :fn :tokens 4
+          :rationale "Verifies buffer lease acquisition conflict expiry and release")
+    (:sym :name "test-dead-peers-eviction" :kind :fn :tokens 4
+          :rationale "Verifies eviction of dead peers exceeding heartbeat TTL")
   ]
 )
 
