@@ -14,7 +14,9 @@
   :d "Verifies router construction with tool list."
   (let [(t1 (tp/make-tool-descriptor "t1" "Tool 1" "doc" "g1" (list "*") (list "*") (tp/safety-safe) "cmd1" (list) (map-empty) (list)))
         (router (tpr/make-tool-router (list t1)))]
-    (= (list-len (.-tools router)) 1)))
+    (do
+      (assert (= (list-len (.-tools router)) 1) "router has 1 tool")
+      true)))
 
 (df test-router-repo-scoping [] -> Bool
   :d "Verifies multi-repo scope isolation when routing tools."
@@ -26,8 +28,10 @@
         (ctx-crawl (tp/make-scope-context "crawler" "implementer" (tp/safety-dangerous)))
         (routed-asl (tpr/route-tools router ctx-asl false))
         (routed-crawl (tpr/route-tools router ctx-crawl false))]
-    (and (= (list-len routed-asl) 2)
-         (= (list-len routed-crawl) 2))))
+    (do
+      (assert (= (list-len routed-asl) 2) "routed asl count is 2")
+      (assert (= (list-len routed-crawl) 2) "routed crawl count is 2")
+      true)))
 
 (df test-router-agent-authorization [] -> Bool
   :d "Verifies agent role permissions enforcement when routing tools."
@@ -39,8 +43,10 @@
         (ctx-rev (tp/make-scope-context "asl" "reviewer" (tp/safety-dangerous)))
         (routed-impl (tpr/route-tools router ctx-impl false))
         (routed-rev (tpr/route-tools router ctx-rev false))]
-    (and (= (list-len routed-impl) 2)
-         (= (list-len routed-rev) 2))))
+    (do
+      (assert (= (list-len routed-impl) 2) "routed impl count is 2")
+      (assert (= (list-len routed-rev) 2) "routed rev count is 2")
+      true)))
 
 (df test-router-safety-ceiling [] -> Bool
   :d "Verifies that dangerous tools are excluded when context safety ceiling is guarded or safe."
@@ -51,9 +57,11 @@
         (ctx-safe (tp/make-scope-context "asl" "implementer" (tp/safety-safe)))
         (ctx-guard (tp/make-scope-context "asl" "implementer" (tp/safety-guarded)))
         (ctx-dang (tp/make-scope-context "asl" "implementer" (tp/safety-dangerous)))]
-    (and (= (tpr/count-routed-tools router ctx-safe) 1)
-         (and (= (tpr/count-routed-tools router ctx-guard) 2)
-              (= (tpr/count-routed-tools router ctx-dang) 3)))))
+    (do
+      (assert (= (tpr/count-routed-tools router ctx-safe) 1) "safe count is 1")
+      (assert (= (tpr/count-routed-tools router ctx-guard) 2) "guard count is 2")
+      (assert (= (tpr/count-routed-tools router ctx-dang) 3) "dang count is 3")
+      true)))
 
 (df test-router-secret-masking [] -> Bool
   :d "Verifies that secret masking strips secrets on routed descriptors when requested."
@@ -64,9 +72,11 @@
         (ctx (tp/make-scope-context "asl" "implementer" (tp/safety-safe)))
         (masked-tools (tpr/route-tools router ctx true))
         (masked-t (list-head masked-tools))]
-    (and (= (list-len masked-tools) 1)
-         (and (.-redacted masked-t)
-              (= (list-len (.-secrets masked-t)) 0)))))
+    (do
+      (assert (= (list-len masked-tools) 1) "masked tools count is 1")
+      (assert (.-redacted masked-t) "tool is redacted")
+      (assert (= (list-len (.-secrets masked-t)) 0) "secrets list is empty")
+      true)))
 
 (df test-router-runbook-and-guidance [] -> Bool
   :d "Verifies guidance retrieval and runbook registration/lookup."
@@ -76,16 +86,19 @@
         (r1 (tpr/register-tool-runbook r0 "t-run" rb))
         (guidance (tpr/get-tool-guidance r1 "t-run"))
         (found-rb (tpr/get-tool-runbook r1 "t-run"))]
-    (and (= guidance "Run only after git status is clean")
-         (mt found-rb
-           ((some b) (= (.-id b) "rb-01"))
-           (_ false)))))
+    (do
+      (assert (= guidance "Run only after git status is clean") "guidance matches")
+      (assert (option-some? found-rb) "runbook is found")
+      (assert (= (.-id (option-unwrap found-rb)) "rb-01") "runbook id matches")
+      true)))
 
 (df run-tests [] -> Bool
   :d "Executes agent bus tool plane unit test suite."
-  (and (test-router-creation)
-       (and (test-router-repo-scoping)
-            (and (test-router-agent-authorization)
-                 (and (test-router-safety-ceiling)
-                      (and (test-router-secret-masking)
-                           (test-router-runbook-and-guidance)))))))
+  (do
+    (test-router-creation)
+    (test-router-repo-scoping)
+    (test-router-agent-authorization)
+    (test-router-safety-ceiling)
+    (test-router-secret-masking)
+    (test-router-runbook-and-guidance)
+    true))

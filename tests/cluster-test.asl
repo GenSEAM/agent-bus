@@ -5,7 +5,8 @@
       test-normalize-keys
       test-pack-dag-keys
       test-dispatch-and-receipt-lifecycle
-      run-cluster-tests]
+      run-cluster-tests
+      run-tests]
   :i [(cluster :a c)])
 
 (df test-worker-idle-state [] -> Bool
@@ -28,8 +29,10 @@
               :state (c/state-busy)
               :caps (list "dag-plan" "adr-review")
               :ping 24))]
-    (and (c/worker-idle? w1)
-         (not (c/worker-idle? w2)))))
+    (do
+      (assert (c/worker-idle? w1) "worker 1 is idle")
+      (assert (not (c/worker-idle? w2)) "worker 2 is not idle")
+      true)))
 
 (df test-pool-registration-and-selection [] -> Bool
   :d "Tests adding remote workers to the pool and querying by capability."
@@ -56,33 +59,39 @@
         (coder-opt (c/pool-select p1 "coder" "ast-patch"))
         (vision-opt (c/pool-select p1 "vision" "svg-diff"))
         (miss-opt (c/pool-select p1 "crawler" "deep-search"))]
-    (and (option-some? coder-opt)
-         (option-some? vision-opt)
-         (not (option-some? miss-opt))
-         (= (.-id (option-unwrap coder-opt)) "worker-qwen-1")
-         (= (.-id (option-unwrap vision-opt)) "worker-vision-1"))))
+    (do
+      (assert (option-some? coder-opt) "coder worker found")
+      (assert (option-some? vision-opt) "vision worker found")
+      (assert (not (option-some? miss-opt)) "missing worker not found")
+      (assert (= (.-id (option-unwrap coder-opt)) "worker-qwen-1") "coder worker id match")
+      (assert (= (.-id (option-unwrap vision-opt)) "worker-vision-1") "vision worker id match")
+      true)))
 
 (df test-normalize-keys [] -> Bool
   :d "Verifies rational unambiguous normalization without state and status collision."
   (let [(raw "(:node :sender \"orchestrator\" :target \"worker-1\" :payload \"test\" :status :pass :state :active :dependencies [\"t0\"])")
         (normalized (c/pack-keys raw))
         (restored (c/unpack-keys normalized))]
-    (and (string-contains? normalized ":from \"orchestrator\"")
-         (string-contains? normalized ":to \"worker-1\"")
-         (string-contains? normalized ":deps [\"t0\"]")
-         (string-contains? normalized ":status :pass")
-         (string-contains? normalized ":state :active")
-         (= restored raw))))
+    (do
+      (assert (string-contains? normalized ":from \"orchestrator\"") "has from")
+      (assert (string-contains? normalized ":to \"worker-1\"") "has to")
+      (assert (string-contains? normalized ":deps [\"t0\"]") "has deps")
+      (assert (string-contains? normalized ":status :pass") "has status pass")
+      (assert (string-contains? normalized ":state :active") "has state active")
+      (assert (= restored raw) "restored matches raw")
+      true)))
 
 (df test-pack-dag-keys [] -> Bool
   :d "Tests compacting a DAG task node definition into a canonical expression."
   (let [(deps (list "task-setup" "task-schema"))
         (premises (list "premise-airgap-active"))
         (dag-str (c/pack-dag "task-cluster-01" "Deploy remote worker" deps premises))]
-    (and (string-contains? dag-str ":node :id \"task-cluster-01\"")
-         (string-contains? dag-str ":deps 2")
-         (string-contains? dag-str ":premises 1")
-         (string-contains? dag-str ":state :pending"))))
+    (do
+      (assert (string-contains? dag-str ":node :id \"task-cluster-01\"") "has node id")
+      (assert (string-contains? dag-str ":deps 2") "has deps 2")
+      (assert (string-contains? dag-str ":premises 1") "has premises 1")
+      (assert (string-contains? dag-str ":state :pending") "has state pending")
+      true)))
 
 (df test-dispatch-and-receipt-lifecycle [] -> Bool
   :d "Tests dispatching a task frame to a worker and receiving a canonical receipt."
@@ -98,18 +107,26 @@
         (dag-payload "(:task :title \"Patch AST\" :deps 0 :status :active)")
         (dispatch-frame (c/dispatch-task "frame-9001" "leader-node" w "task-42" dag-payload))
         (rc-frame (c/make-receipt "frame-9002" "worker-qwen-1" "leader-node" "task-42" 18 55))]
-    (and (= (.-from dispatch-frame) "leader-node")
-         (= (.-to dispatch-frame) "worker-qwen-1")
-         (string-contains? (.-wire-payload dispatch-frame) ":task :title \"Patch AST\"")
-         (= (.-from rc-frame) "worker-qwen-1")
-         (= (.-to rc-frame) "leader-node")
-         (string-contains? (.-wire-payload rc-frame) ":receipt :node \"worker-qwen-1\"")
-         (string-contains? (.-wire-payload rc-frame) ":status :pass"))))
+    (do
+      (assert (= (.-from dispatch-frame) "leader-node") "dispatch frame leader")
+      (assert (= (.-to dispatch-frame) "worker-qwen-1") "dispatch frame to worker")
+      (assert (string-contains? (.-wire-payload dispatch-frame) ":task :title \"Patch AST\"") "dispatch payload content")
+      (assert (= (.-from rc-frame) "worker-qwen-1") "rc frame from worker")
+      (assert (= (.-to rc-frame) "leader-node") "rc frame to leader")
+      (assert (string-contains? (.-wire-payload rc-frame) ":receipt :node \"worker-qwen-1\"") "rc payload worker")
+      (assert (string-contains? (.-wire-payload rc-frame) ":status :pass") "rc payload pass")
+      true)))
 
 (df run-cluster-tests [] -> Bool
   :d "Executes all cluster mesh and single-token DAG dispatch tests."
-  (and (test-worker-idle-state)
-       (test-pool-registration-and-selection)
-       (test-normalize-keys)
-       (test-pack-dag-keys)
-       (test-dispatch-and-receipt-lifecycle)))
+  (do
+    (test-worker-idle-state)
+    (test-pool-registration-and-selection)
+    (test-normalize-keys)
+    (test-pack-dag-keys)
+    (test-dispatch-and-receipt-lifecycle)
+    true))
+
+(df run-tests [] -> Bool
+  :d "Standard test runner."
+  (run-cluster-tests))
