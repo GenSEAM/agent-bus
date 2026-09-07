@@ -2,8 +2,10 @@
   :d "A2A Mesh Topology, Peer Routing Table & Swarm Bus in ASL"
   :x [MeshNode RoutingTable TransportProtocol
       create-routing-table register-mesh-node
-      route-packet is-node-alive]
-  :i [(core/strings :a s)])
+      route-packet is-node-alive
+      TaskConstraint TaskContract
+      make-task-constraint make-task-contract delegate-contract]
+  :i [])
 
 (dfe TransportProtocol
   (:c ipc-uds [] "Unix domain socket IPC")
@@ -41,4 +43,35 @@
 
 (df route-packet [(rt RoutingTable) (from Str) (to Str) (payload Str)] -> Str
   :d "Generates dispatch frame for routed packet"
-  (s/concat (s/concat (s/concat "(packet :from \"" from) (s/concat "\" :to \"" to)) (s/concat "\" :data " (s/concat payload ")"))))
+  (str "(packet :from \"" from "\" :to \"" to "\" :data " payload ")"))
+
+(dfs TaskConstraint
+  (:f id Str "Constraint identifier e.g. C01")
+  (:f rule Str "Normative constraint requirement or invariant")
+  (:f severity Str "Severity level: hard | soft | advisory"))
+
+(dfs TaskContract
+  (:f task-id Str "Unique task identifier")
+  (:f origin-prompt Str "Original user or delegator instruction")
+  (:f constraints (List TaskConstraint) "Active constraints and invariants")
+  (:f acceptance-criteria (List Str) "List of verifiable acceptance criteria")
+  (:f delegation-mode Str "Delegation mode: direct | mesh")
+  (:f assigned-roles (List Str) "Assigned swarm agent roles e.g. scout, coder, reviewer"))
+
+(df make-task-constraint [(id Str) (rule Str) (severity Str)] -> TaskConstraint
+  :d "Constructs a validated task constraint descriptor."
+  (TaskConstraint :id id :rule rule :severity severity))
+
+(df make-task-contract [(task-id Str) (origin-prompt Str) (constraints (List TaskConstraint)) (acceptance-criteria (List Str)) (delegation-mode Str) (assigned-roles (List Str))] -> TaskContract
+  :d "Constructs a formal task contract for cross-agent delegation."
+  (TaskContract
+    :task-id task-id
+    :origin-prompt origin-prompt
+    :constraints constraints
+    :acceptance-criteria acceptance-criteria
+    :delegation-mode delegation-mode
+    :assigned-roles assigned-roles))
+
+(df delegate-contract [(contract TaskContract) (target-role Str)] -> Str
+  :d "Dispatches a task contract to an assigned role within the mesh."
+  (str "(:contract-dispatch :task-id \"" (.-task-id contract) "\" :role \"" target-role "\" :mode \"" (.-delegation-mode contract) "\")"))

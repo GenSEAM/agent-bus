@@ -262,6 +262,17 @@
           :rationale "Unit test verifying secret redaction for routed tools")
     (:sym :name "test-router-runbook-and-guidance" :kind :fn :tokens 4
           :rationale "Unit test verifying tool runbook and operational guidance retrieval")
+
+    ;; Phase 257 Epistemic Architecture & Task Contract Symbols
+    (:sym :name "TaskConstraint" :kind :type :tokens 2)
+    (:sym :name "TaskContract" :kind :type :tokens 2)
+    (:sym :name "make-task-constraint" :kind :fn :tokens 3
+          :rationale "Constructs a validated task constraint descriptor")
+    (:sym :name "make-task-contract" :kind :fn :tokens 3
+          :rationale "Constructs a formal task contract for cross-agent delegation")
+    (:sym :name "delegate-contract" :kind :fn :tokens 2)
+    (:sym :name "test-task-contract-delegation" :kind :fn :tokens 4
+          :rationale "Unit test verifying task contract construction and delegation dispatch frame generation")
   ]
 )
 
