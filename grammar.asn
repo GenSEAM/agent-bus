@@ -194,8 +194,17 @@
           :rationale "Verifies cluster dispatch and receipt lifecycle")
     (:sym :name "run-cluster-tests" :kind :fn :tokens 3
           :rationale "Runs complete cluster mesh and unambiguous dispatch test suite")
+    (:sym :name "test-routing-table-creation" :kind :fn :tokens 4
+          :rationale "Verifies initial mesh routing table creation")
+    (:sym :name "test-node-registration" :kind :fn :tokens 3
+          :rationale "Verifies agent node registration into mesh routing table")
+    (:sym :name "test-node-liveness" :kind :fn :tokens 3
+          :rationale "Verifies agent node liveness check")
+    (:sym :name "test-packet-routing" :kind :fn :tokens 3
+          :rationale "Verifies peer packet dispatch frame routing")
   ]
 )
+
 
 
 
