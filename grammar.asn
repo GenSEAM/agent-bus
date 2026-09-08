@@ -349,8 +349,22 @@
           :rationale "Verifies buffer lease acquisition conflict expiry and release")
     (:sym :name "test-dead-peers-eviction" :kind :fn :tokens 4
           :rationale "Verifies eviction of dead peers exceeding heartbeat TTL")
+    (:sym :name "NDASNFrame" :kind :type :tokens 1)
+    (:sym :name "nd-asn-frame" :kind :fn :tokens 3
+          :rationale "Constructs an NDASNFrame record packaging topic seq payload and timestamp")
+    (:sym :name "nd-asn-serialize" :kind :fn :tokens 3
+          :rationale "Serializes ASL records or S-expressions into newline-delimited ASN frames")
+    (:sym :name "nd-asn-deserialize" :kind :fn :tokens 3
+          :rationale "Parses newline-delimited ASN stream into individual parsed ASL expressions or frames")
+    (:sym :name "nd-asn-parse-lines" :kind :fn :tokens 3
+          :rationale "Splits raw string buffer on newline boundaries while preserving balanced expressions")
+    (:sym :name "nd-asn-make-toolcall" :kind :fn :tokens 3
+          :rationale "Constructs an M2M tool call evaluation frame without JSON encoding overhead")
+    (:sym :name "nd-asn-eval-payload" :kind :fn :tokens 3
+          :rationale "Extracts and evaluates inline code or tool payload passed across the memory bus")
   ]
 )
+
 
 
 
