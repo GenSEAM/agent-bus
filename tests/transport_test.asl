@@ -46,6 +46,8 @@
   (let [(env (tr/make-transport-envelope "f-99" (tr/frame-heartbeat) "nodeA" "nodeB" 42 "ping" 1000))
         (hdr (tr/format-frame-header env))]
     (assert (= hdr "FRAME:f-99:42:nodeA->nodeB") "Frame header must match FRAME:id:seq:sender->target format")
+    (assert (not (string-contains? hdr "nodeB->nodeA")) "Frame header direction must not be reversed")
+    (assert (not (string-contains? hdr "FRAME:f-99:0:")) "Frame header sequence must not be 0")
     true))
 
 (df test-envelope-validation [] -> Bool

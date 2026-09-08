@@ -96,6 +96,8 @@
         (encoded (w/encode-wire-frame frame))
         (decoded (w/decode-wire-frame encoded))]
     (assert (= (w/unpack-wire-frame decoded) msg) "Internal delimiters in payload must parse without truncation")
+    (assert (not (w/is-compressed? decoded)) "Uncompressed frame with internal delimiters must not be marked compressed")
+    (assert (not (= (w/unpack-wire-frame decoded) "(call :tool \"edit\" :args (list \"val)")) "Truncated payload at paren must not match")
     true))
 
 (df run-wire-tests [] -> Bool

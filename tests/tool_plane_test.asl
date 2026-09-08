@@ -13,9 +13,12 @@
 (df test-router-creation [] -> Bool
   :d "Verifies router construction with tool list."
   (let [(t1 (tp/make-tool-descriptor "t1" "Tool 1" "doc" "g1" (list "*") (list "*") (tp/safety-safe) "cmd1" (list) (map-empty) (list)))
-        (router (tpr/make-tool-router (list t1)))]
+        (router (tpr/make-tool-router (list t1)))
+        (empty-router (tpr/make-tool-router (list)))]
     (do
       (assert (= (list-len (.-tools router)) 1) "router has 1 tool")
+      (assert (= (list-len (.-tools empty-router)) 0) "empty router has 0 tools")
+      (assert (not (option-some? (tpr/get-tool-runbook router "nonexistent"))) "unregistered tool runbook is none")
       true)))
 
 (df test-router-repo-scoping [] -> Bool

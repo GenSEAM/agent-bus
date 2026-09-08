@@ -30,8 +30,12 @@
 
 (df test-ping-event [] -> Bool
   :d "Verifies ping event behavior."
-  (let [(evt (bus/ping))]
+  (let [(evt (bus/ping))
+        (msg (bus/AgentMessage :sender "kernel" :target "all" :payload "ping" :timestamp 1700000002))
+        (b-evt (bus/broadcast msg))]
     (assert (not (bus/is-broadcast evt)) "Ping event must not be broadcast")
+    (assert (bus/is-broadcast b-evt) "Broadcast event must be detected as broadcast")
+    (assert (= (.-sender msg) "kernel") "Ping sender matches")
     true))
 
 (df run-tests [] -> Bool
