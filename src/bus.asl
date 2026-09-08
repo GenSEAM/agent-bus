@@ -1,6 +1,17 @@
 (module asl-agent-bus/bus
   :d "Inter-Agent Swarm Bus Protocol in ASL"
-  :x [AgentMessage BusEvent format-sse-event is-broadcast]
+  :x [AgentMessage
+      BusEvent
+      format-sse-event
+      is-broadcast
+      BusChannel
+      TaskLifecycleState
+      BusReceipt
+      dispatch-bus-event
+      make-lifecycle-event
+      format-lifecycle-sse
+      channel-to-str
+      lifecycle-to-str]
   :i [(core/strings :a s)])
 
 (dfs AgentMessage
@@ -14,6 +25,27 @@
   (:c broadcast [(msg AgentMessage)] "broadcast message")
   (:c ping [] "ping event"))
 
+(dfe BusChannel
+  (:c lifecycle [] "Task lifecycle state transition events")
+  (:c telemetry [] "High-signal auditory and visual telemetry metrics")
+  (:c control [] "Supervisory control and handoff commands")
+  (:c audit [] "Clean-context verification gate receipts"))
+
+(dfe TaskLifecycleState
+  (:c queued [] "Task queued in pending buffer")
+  (:c routing [] "Task routing to worker lanes")
+  (:c executing [] "Task executing in worker lanes")
+  (:c verifying [] "Task undergoing gate verification")
+  (:c done [] "Task completed successfully")
+  (:c failed [] "Task execution or verification failed"))
+
+(dfs BusReceipt
+  (:f channel Str "Target bus channel identifier")
+  (:f sender Str "Sender identifier")
+  (:f target Str "Target recipient identifier")
+  (:f delivered Bool "True if event was delivered to channel")
+  (:f timestamp I64 "Dispatch timestamp"))
+
 (df format-sse-event [(event-name Str) (data Str)] -> Str
   :d "Formats SSE event payload"
   (s/concat (s/concat (s/concat "event: " event-name) "\ndata: ") (s/concat data "\n\n")))
@@ -23,3 +55,43 @@
   (mt event
     ((broadcast msg) true)
     (_ false)))
+
+(df channel-to-str [(ch BusChannel)] -> Str
+  :d "Converts bus channel enum to string identifier"
+  (mt ch
+    ((lifecycle) "lifecycle")
+    ((telemetry) "telemetry")
+    ((control) "control")
+    ((audit) "audit")))
+
+(df lifecycle-to-str [(state TaskLifecycleState)] -> Str
+  :d "Converts lifecycle state enum to canonical string"
+  (mt state
+    ((queued) "QUEUED")
+    ((routing) "ROUTING")
+    ((executing) "EXECUTING")
+    ((verifying) "VERIFYING")
+    ((done) "DONE")
+    ((failed) "FAILED")))
+
+(df make-lifecycle-event [(task-id Str) (state TaskLifecycleState) (detail Str)] -> AgentMessage
+  :d "Creates an AgentMessage representing a lifecycle state transition"
+  (AgentMessage
+    :sender "kernel"
+    :target "bus"
+    :payload (str "(:lifecycle :task \"" task-id "\" :state \"" (lifecycle-to-str state) "\" :detail \"" detail "\")")
+    :timestamp 1725800000))
+
+(df dispatch-bus-event [(ch BusChannel) (msg AgentMessage)] -> BusReceipt
+  :d "Dispatches an event message to the designated channel"
+  (BusReceipt
+    :channel (channel-to-str ch)
+    :sender (.-sender msg)
+    :target (.-target msg)
+    :delivered true
+    :timestamp (.-timestamp msg)))
+
+(df format-lifecycle-sse [(task-id Str) (state TaskLifecycleState) (detail Str)] -> Str
+  :d "Formats task lifecycle event into SSE wire format"
+  (let [(data (str "(:lifecycle :task \"" task-id "\" :state \"" (lifecycle-to-str state) "\" :detail \"" detail "\")"))]
+    (format-sse-event "lifecycle" data)))
