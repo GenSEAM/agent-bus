@@ -57,8 +57,14 @@
           :rationale "Adapts Anthropic Messages requests into canonical ASL gateway frame")
     (:sym :name "format-anthropic-response" :kind :fn :tokens 3
           :rationale "Formats Gateway inspection verdict into valid Anthropic Messages response JSON")
+    (:sym :name "is-asn-tool-call?" :kind :fn :tokens 3
+          :rationale "Predicates whether an S-expression is an imperative tool call rather than data")
+    (:sym :name "format-asn-protocol-headers" :kind :fn :tokens 4
+          :rationale "Constructs HTTP protocol negotiation headers advertising ASN tool-call capability")
     (:sym :name "test-anthropic-adapter" :kind :fn :tokens 3
           :rationale "Verifies adaptation of Anthropic Messages requests and responses")
+    (:sym :name "test-asn-tool-call-detection-and-headers" :kind :fn :tokens 5
+          :rationale "Unit test asserting S-expression tool call disambiguation and protocol headers")
 
     ;; Phase 18 Browser Bridge Symbols
     (:sym :name "BridgeTab" :kind :type :tokens 1)

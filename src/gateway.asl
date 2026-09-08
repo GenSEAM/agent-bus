@@ -8,6 +8,8 @@
       calculate-lcs-grounding
       inspect-gateway-turn
       format-gateway-verdict
+      is-asn-tool-call?
+      format-asn-protocol-headers
       adapt-anthropic-request
       format-anthropic-response
       proxy-contract-to-mesh]
@@ -49,12 +51,26 @@
                   (remaining (string-trim (str prefix " " suffix)))]
               (pair (string-trim think-content) remaining)))))))))
 
+(df is-asn-tool-call? [(expr Str)] -> Bool
+  :d "Returns true if S-expression represents an imperative tool call rather than structural data."
+  (let [(trimmed (string-trim expr))]
+    (or (string-starts-with? trimmed "(call :tool")
+        (or (string-starts-with? trimmed "(:call :tool")
+            (string-starts-with? trimmed "(:call ")))))
+
+(df format-asn-protocol-headers [] -> (List (Pair Str Str))
+  :d "Constructs HTTP protocol negotiation headers advertising ASN tool-call capability."
+  (list
+    (pair "X-ASL-Wire-Protocol" "asn/1.0")
+    (pair "X-Tool-Call-Dialect" "asn-sexpr")
+    (pair "Accept" "application/asn+sexpr, application/json")))
+
 (df extract-tool-calls [(text Str)] -> (Pair (List Str) Str)
-  :d "Extracts top-level (call :tool ...) expressions from text, returning (pair tool-calls remaining)."
+  :d "Extracts top-level (:call :tool ...) or (call :tool ...) expressions from text, returning (pair tool-calls remaining)."
   (let [(lines (string-split text "\n"))
         (res (fold (fn [(acc (Pair (List Str) (List Str))) (ln Str)] -> (Pair (List Str) (List Str))
                      (let [(trimmed (string-trim ln))]
-                       (if (string-starts-with? trimmed "(call :tool")
+                       (if (is-asn-tool-call? trimmed)
                            (pair (list-append (fst acc) (list trimmed)) (snd acc))
                            (pair (fst acc) (list-append (snd acc) (list ln))))))
                    (pair (list) (list))

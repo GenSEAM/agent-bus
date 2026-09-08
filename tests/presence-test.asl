@@ -88,15 +88,16 @@
 
 (df run-tests [] -> Bool
   :d "Runs all room presence and negotiation unit tests."
-  (let [(_t1 (test-room-create-and-join))
-        (_t2 (test-room-peer-lookup))
-        (_t3 (test-room-leave))
-        (_t4 (test-negotiation-handshake-accept))
-        (_t5 (test-negotiation-handshake-decline))
-        (_t6 (test-format-presence-roster))
-        (_t7 (test-bridge-external-dispatch))]
-    true))
+  (and (test-room-create-and-join)
+       (test-room-peer-lookup)
+       (test-room-leave)
+       (test-negotiation-handshake-accept)
+       (test-negotiation-handshake-decline)
+       (test-format-presence-roster)
+       (test-bridge-external-dispatch)))
 
 (df run-presence-tests [] -> Bool
   :d "Runs all room presence and negotiation unit tests."
   (run-tests))
+
+(run-tests)

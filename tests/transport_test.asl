@@ -60,9 +60,10 @@
 
 (df run-tests [] -> Bool
   :d "Executes all transport specification unit tests."
-  (let [(_t1 (test-envelope-creation))
-        (_t2 (test-session-lifecycle))
-        (_t3 (test-session-counters))
-        (_t4 (test-frame-header-formatting))
-        (_t5 (test-envelope-validation))]
-    true))
+  (and (test-envelope-creation)
+       (test-session-lifecycle)
+       (test-session-counters)
+       (test-frame-header-formatting)
+       (test-envelope-validation)))
+
+(run-tests)

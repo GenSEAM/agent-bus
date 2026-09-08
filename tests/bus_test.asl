@@ -36,8 +36,9 @@
 
 (df run-tests [] -> Bool
   :d "Runs agent bus unit tests"
-  (let [(_t1 (test-sse-formatting))
-        (_t2 (test-broadcast-event))
-        (_t3 (test-direct-event))
-        (_t4 (test-ping-event))]
-    true))
+  (and (test-sse-formatting)
+       (test-broadcast-event)
+       (test-direct-event)
+       (test-ping-event)))
+
+(run-tests)

@@ -9,6 +9,7 @@
       test-anthropic-adapter
       test-remote-mesh-timeout-unreachable
       test-control-plane-token-economy
+      test-asn-tool-call-detection-and-headers
       run-tests]
   :i [(gateway :a gw) (mesh :a m)])
 
@@ -107,6 +108,31 @@
     (and (< (string-length dispatch-str) 200)
          (string-contains? dispatch-str ":control-dispatch"))))
 
+(df test-asn-tool-call-detection-and-headers [] -> Bool
+  :d "Verifies disambiguation between ASN tool calls and structural ASN data, plus wire headers."
+  (let [(tc1 "(:call :tool read :path \"core/auth.asl\" :start 1 :end 20)")
+        (tc2 "(call :tool exec :cmd \"asl test\")")
+        (data1 "(:struct User (:f name Str) (:f age I64))")
+        (data2 "(:ast-outline (:module auth) (:exports [login]))")
+        (mixed (str "Here is the user type:\n" data1 "\n" tc1 "\nDone."))
+        (frames (gw/demux-stream-content mixed))
+        (headers (gw/format-asn-protocol-headers))]
+    (and (gw/is-asn-tool-call? tc1)
+         (and (gw/is-asn-tool-call? tc2)
+              (and (not (gw/is-asn-tool-call? data1))
+                   (and (not (gw/is-asn-tool-call? data2))
+                        (and (= (list-length frames) 2)
+                             (let [(f-tool (list-head frames))
+                                   (f-ui (list-head (list-drop frames 1)))]
+                               (and (mt f-tool
+                                      ((some ft) (and (mt (.-channel ft) ((channel-tool) true) ((channel-ui) false) ((channel-think) false))
+                                                      (string-contains? (.-content ft) "(:call :tool read")))
+                                      ((none) false))
+                                    (mt f-ui
+                                      ((some fu) (and (mt (.-channel fu) ((channel-ui) true) ((channel-tool) false) ((channel-think) false))
+                                                      (string-contains? (.-content fu) "(:struct User")))
+                                      ((none) false)))))))))))
+
 (df run-tests [] -> Bool
   :d "Executes full L7 cognitive gateway test suite with strict falsification assertions."
   (do
@@ -119,4 +145,5 @@
     (assert (test-anthropic-adapter))
     (assert (test-remote-mesh-timeout-unreachable))
     (assert (test-control-plane-token-economy))
+    (assert (test-asn-tool-call-detection-and-headers))
     true))
