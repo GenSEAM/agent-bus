@@ -1,7 +1,7 @@
 ;; Package Grammar & Exported Symbol Registry (ASN)
-;; @genseam/agent-bus
+;; agent-bus
 (:grammar
-  :package @genseam/agent-bus
+  :package agent-bus
   :version "0.1.0"
   :tokens-baseline 2
   :symbols [
