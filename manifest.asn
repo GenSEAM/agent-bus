@@ -3,5 +3,5 @@
  :entry "src/bus.asl"
  :description "High-frequency in-memory agent-to-agent communication mesh"
  :asl-first true
- :modules ["agent-bus/ambient"]
+ :modules ["agent-bus/ambient" "agent-bus/mvcc-bus"]
  :dependencies [])

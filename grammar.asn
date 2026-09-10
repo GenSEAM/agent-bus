@@ -368,6 +368,18 @@
           :rationale "Constructs an M2M tool call evaluation frame without JSON encoding overhead")
     (:sym :name "nd-asn-eval-payload" :kind :fn :tokens 3
           :rationale "Extracts and evaluates inline code or tool payload passed across the memory bus")
+    (:sym :name "CausalMessage" :kind :type :tokens 2
+          :rationale "Immutable message with causal parents and Lamport clock")
+    (:sym :name "IntentConflict" :kind :type :tokens 2
+          :rationale "Record of semantic conflict between divergent agent proposals")
+    (:sym :name "MergedIntent" :kind :type :tokens 2
+          :rationale "Synthesized intent frame merged from parallel message branches")
+    (:sym :name "MvccBus" :kind :type :tokens 2
+          :rationale "Branching causal DAG message bus coordinator")
+    (:sym :name "mvcc-bus-publish" :kind :fn :tokens 3
+          :rationale "Appends immutable message to causal DAG and updates frontier heads")
+    (:sym :name "mvcc-bus-merge-intents" :kind :fn :tokens 4
+          :rationale "Synthesizes parallel agent proposals via semantic 3-way intent merge")
   ]
 )
 
