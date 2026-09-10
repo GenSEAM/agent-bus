@@ -23,13 +23,15 @@
     true))
 
 (df test-workspace-partitioning [] -> Bool
-  :d "Verifies detection of workspace collisions across distinct monorepo projects"
+  :d "Verifies detection of workspace collisions across distinct monorepo projects with dual polarity"
   (let [(p1 (m/make-daemon-peer "n1" "project-alpha" 100 "/tmp/s1.sock" 8441 "worker" 1773490000000))
         (p2 (m/make-daemon-peer "n2" "project-alpha" 200 "/tmp/s2.sock" 8442 "worker" 1773490000000))
         (p3 (m/make-daemon-peer "n3" "project-beta" 300 "/tmp/s3.sock" 8443 "worker" 1773490000000))
         (peers (list p1 p2 p3))
-        (collisions (m/detect-workspace-collisions peers "project-alpha"))]
+        (collisions (m/detect-workspace-collisions peers "project-alpha"))
+        (empty-collisions (m/detect-workspace-collisions peers "project-gamma"))]
     (assert (= (list-length collisions) 2) "Must detect 2 peers sharing project-alpha workspace")
+    (refute (> (list-length empty-collisions) 0) "Must not detect collisions for unused project-gamma")
     true))
 
 (df test-buffer-mutex-acquisition [] -> Bool
@@ -59,13 +61,14 @@
     true))
 
 (df test-peer-heartbeat-timeout [] -> Bool
-  :d "Verifies eviction of dead peers exceeding heartbeat threshold"
+  :d "Verifies eviction of dead peers exceeding heartbeat threshold with dual polarity"
   (let [(reg (m/create-peer-registry "ws-hash"))
         (dead-peer (m/make-daemon-peer "dead-node" "ws-hash" 500 "/tmp/dead.sock" 8440 "worker" 1773490000000))
         (reg2 (m/register-daemon-peer reg dead-peer))
         (reg-clean (m/evict-dead-peers reg2 1773490020000 15000))
         (peer-list (map-values (.-peers reg-clean)))]
     (assert (= (list-length peer-list) 0) "Dead peer must be evicted after 15s timeout")
+    (refute (map-contains-key? (.-peers reg-clean) "dead-node") "Dead peer must not remain in registry")
     true))
 
 (df run-tests [] -> Bool
