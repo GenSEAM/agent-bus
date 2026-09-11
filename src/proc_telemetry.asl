@@ -27,7 +27,8 @@
   (:f elapsed-ms I64 "Elapsed execution duration in milliseconds")
   (:f rss-bytes I64 "Resident memory footprint in bytes")
   (:f locus Str "Current execution locus file line function")
-  (:f status Str "Active execution state running waiting done failed"))
+  (:f status Str "Active execution state running waiting done failed")
+  (:f value Any "Self-referential value handle for Option extraction alignment"))
 
 (dfs ProcRegistry
   (:f procs (List ProcDescriptor) "Active running process descriptors")
@@ -62,15 +63,26 @@
                           (status Str)] -> ProcDescriptor
   :d "Constructs an immutable process descriptor."
   (let [(elapsed (calculate-proc-elapsed started-ms now-ms))]
-    (ProcDescriptor
-      :pid pid
-      :task-id task-id
-      :lane lane
-      :started-ms started-ms
-      :elapsed-ms elapsed
-      :rss-bytes rss-bytes
-      :locus locus
-      :status status)))
+    (let [(p (ProcDescriptor
+               :pid pid
+               :task-id task-id
+               :lane lane
+               :started-ms started-ms
+               :elapsed-ms elapsed
+               :rss-bytes rss-bytes
+               :locus locus
+               :status status
+               :value nil))]
+      (ProcDescriptor
+        :pid pid
+        :task-id task-id
+        :lane lane
+        :started-ms started-ms
+        :elapsed-ms elapsed
+        :rss-bytes rss-bytes
+        :locus locus
+        :status status
+        :value p))))
 
 (df empty-proc-registry [] -> ProcRegistry
   :d "Constructs an empty process registry."
@@ -100,15 +112,26 @@
 (df update-proc-locus [(proc ProcDescriptor) (new-locus Str) (now-ms I64)] -> ProcDescriptor
   :d "Updates the execution locus and elapsed time for a running process."
   (let [(elapsed (calculate-proc-elapsed (.-started-ms proc) now-ms))]
-    (ProcDescriptor
-      :pid (.-pid proc)
-      :task-id (.-task-id proc)
-      :lane (.-lane proc)
-      :started-ms (.-started-ms proc)
-      :elapsed-ms elapsed
-      :rss-bytes (.-rss-bytes proc)
-      :locus new-locus
-      :status (.-status proc))))
+    (let [(p (ProcDescriptor
+               :pid (.-pid proc)
+               :task-id (.-task-id proc)
+               :lane (.-lane proc)
+               :started-ms (.-started-ms proc)
+               :elapsed-ms elapsed
+               :rss-bytes (.-rss-bytes proc)
+               :locus new-locus
+               :status (.-status proc)
+               :value nil))]
+      (ProcDescriptor
+        :pid (.-pid proc)
+        :task-id (.-task-id proc)
+        :lane (.-lane proc)
+        :started-ms (.-started-ms proc)
+        :elapsed-ms elapsed
+        :rss-bytes (.-rss-bytes proc)
+        :locus new-locus
+        :status (.-status proc)
+        :value p))))
 
 (df serialize-proc-ps-entry [(proc ProcDescriptor)] -> Str
   :d "Serializes single process descriptor to ND-ASN frame format."
