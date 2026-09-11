@@ -10,8 +10,8 @@
 
 (df test-daemon-peer-registration [] -> Bool
   :d "Verifies daemon peer registration and lookup in peer registry"
-  (let [(reg (m/create-peer-registry "asex-hash"))
-        (peer (m/make-daemon-peer "node-1" "asex-hash" 1234 "/tmp/asl_hub.sock" 8443 "orchestrator" 1773490000000))
+  (let [(reg (m/create-peer-registry "genseam-hash"))
+        (peer (m/make-daemon-peer "node-1" "genseam-hash" 1234 "/tmp/asl_hub.sock" 8443 "orchestrator" 1773490000000))
         (reg2 (m/register-daemon-peer reg peer))
         (found (m/find-daemon-peer reg2 "node-1"))
         (peer-list (map-values (.-peers reg2)))]
