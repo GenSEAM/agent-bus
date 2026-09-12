@@ -3,5 +3,20 @@
  :entry "src/bus.asl"
  :description "High-frequency in-memory agent-to-agent communication mesh"
  :asl-first true
- :modules ["agent-bus/ambient" "agent-bus/mvcc-bus"]
- :dependencies [])
+ :modules [
+   "asl-agent-bus/ambient"
+   "asl-agent-bus/bridge"
+   "asl-agent-bus/browser-bridge"
+   "asl-agent-bus/bus"
+   "asl-agent-bus/cluster"
+   "asl-agent-bus/gateway"
+   "asl-agent-bus/mesh"
+   "asl-agent-bus/mvcc-bus"
+   "asl-agent-bus/nd-asn"
+   "asl-agent-bus/presence"
+   "asl-agent-bus/proc-telemetry"
+   "asl-agent-bus/tool-plane"
+   "asl-agent-bus/transport"
+   "asl-agent-bus/wire"
+ ]
+ :dependencies ["asl-contracts" "asl-text"])

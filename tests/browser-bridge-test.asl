@@ -8,7 +8,7 @@
       test-handle-mcp-request
       run-tests]
   :i [(asl-bus/browser-bridge :a bb)
-      (core/strings :a s)])
+      (asl-text/string :a s)])
 
 (df test-bridge-init [] -> Bool
   (let [(st (bb/bridge-init 8765))]
@@ -65,9 +65,9 @@
         (resp204 (bb/format-cors-http-response 204 "" ""))]
     (do
       (assert (not (= resp200 "")) "200 ok")
-      (assert true)
-      (assert true)
-      (assert true)
+      (assert (string-contains? resp200 "Access-Control-Allow-Origin: *") "cors 200 allow origin")
+      (assert (string-contains? resp200 "Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE") "cors 200 allow methods")
+      (assert (string-contains? resp200 "Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With") "cors 200 allow headers")
       (assert (not (= resp204 "")) "204 ok")
       (assert (string-contains? resp204 "Access-Control-Allow-Origin: *") "cors 204")
       true)))

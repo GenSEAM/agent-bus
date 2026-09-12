@@ -1,6 +1,6 @@
 (module asl-agent-bus/mvcc-bus
   :d "Branching Causal Message DAG and Semantic Intent Merging for Multi-Agent Swarms"
-  :exports [
+  :x [
     CausalMessage
     IntentConflict
     MergedIntent
