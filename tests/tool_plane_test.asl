@@ -7,7 +7,7 @@
       test-router-secret-masking
       test-router-runbook-and-guidance
       run-tests]
-  :i [(tool_plane :a tp)
+  :i [(../../asl-contracts/src/tool_plane :a tp)
       (asl-agent-bus/tool-plane :a tpr)])
 
 (df test-router-creation [] -> Bool

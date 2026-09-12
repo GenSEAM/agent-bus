@@ -52,12 +52,11 @@
 (df test-mesh-routing-packet [] -> Bool
   :d "Verifies control signal routing to target mesh node"
   (let [(table (m/create-routing-table))
-        (node (m/MeshNode :node-id "remote-slm" :endpoint "wss://slm.internal:8443" :tier "tier-1" :alive true :last-seen 1773490000000))
+        (node (m/MeshNode :id "remote-slm" :role "infer" :tier "tier-1" :inbox-size 0 :is-alive true))
         (table2 (m/register-mesh-node table node))
-        (sig (m/make-control-signal "sig-1" "remote-slm" "infer" "(:prompt \"test\")" 1773490000000))
-        (routed (m/route-packet table2 sig))]
-    (assert (m/is-node-alive node 1773490005000) "Node must be alive within threshold")
-    (assert routed "Packet must be successfully routed to alive node")
+        (routed (m/route-packet table2 "local" "remote-slm" "payload"))]
+    (assert (m/is-node-alive node) "Node must be alive within threshold")
+    (assert (string-contains? routed "remote-slm") "Packet must be successfully routed to alive node")
     true))
 
 (df test-peer-heartbeat-timeout [] -> Bool

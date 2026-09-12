@@ -10,7 +10,7 @@
       bridge-complete-command
       handle-mcp-request
       format-cors-http-response]
-  :i [(core/strings :a s)])
+  :i [(asl-text/string :a s)])
 
 (dfs BridgeTab
   (:f tab-id Str "Unique tab identifier")

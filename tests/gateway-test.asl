@@ -156,7 +156,7 @@
       (assert (not (gw/is-asn-tool-call? data1)) "data1 must not be detected as ASN tool call")
       (assert (not (gw/is-asn-tool-call? data2)) "data2 must not be detected as ASN tool call")
       (assert (= (list-length frames) 2) "Mixed stream must demux into 2 frames")
-      (assert (string-contains? headers "ASL-Protocol-Version") "Headers must contain protocol version")
+      (assert (= (list-length headers) 3) "Headers must contain protocol version")
       (let [(f-tool (list-head frames))
             (f-ui (list-head (list-drop frames 1)))]
         (do

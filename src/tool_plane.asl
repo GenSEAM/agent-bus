@@ -8,7 +8,7 @@
       is-tool-eligible?
       route-tools
       count-routed-tools]
-  :i [(tool_plane :a tp)])
+  :i [(../../asl-contracts/src/tool_plane :a tp)])
 
 (dfs ToolRouter
   (:f tools (List ToolDescriptor) "Registered tool descriptors")

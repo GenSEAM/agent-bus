@@ -12,7 +12,7 @@
       format-lifecycle-sse
       channel-to-str
       lifecycle-to-str]
-  :i [(core/strings :a s)])
+  :i [(asl-text/string :a s)])
 
 (dfs AgentMessage
   (:f sender Str "sender id")
