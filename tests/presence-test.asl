@@ -95,11 +95,12 @@
         (p3 (p/release-claim p2 "asl/tools/asl.c"))
         (room (p/join-swarm-room (p/create-swarm-room "swarm" "testing") p2))
         (roster (p/format-presence-roster room))]
-    (and (= (list-length (.-claims p2)) 2)
-         (not (p/is-claim-expired? (first (.-claims p2)) 120))
-         (p/is-claim-expired? (first (.-claims p2)) 170)
-         (= (list-length (.-claims p3)) 1)
-         (string-contains? roster "asl/tools/asl.c"))))
+    (assert (= (list-length (.-claims p2)) 2) "p2 must have 2 claims")
+    (assert (not (p/is-claim-expired? (first (.-claims p2)) 120)) "claim must not be expired at 120")
+    (assert (p/is-claim-expired? (first (.-claims p2)) 170) "claim must be expired at 170")
+    (assert (= (list-length (.-claims p3)) 1) "p3 must have 1 claim after release")
+    (assert (string-contains? roster "asl/tools/asl.c") "roster must contain claimed path")
+    true))
 
 (df run-tests [] -> Bool
   :d "Runs all room presence and negotiation unit tests."

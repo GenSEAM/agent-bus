@@ -1,6 +1,6 @@
 (module asl-agent-bus/test
   :d "Unit tests for agent bus protocol in ASL"
-  :x [test-sse-formatting test-broadcast-event test-direct-event test-ping-event run-tests]
+  :x [test-sse-formatting test-broadcast-event test-direct-event test-ping-event test-query-events-and-condition-wake run-tests]
   :i [(bus :a bus)])
 
 (df test-sse-formatting [] -> Bool

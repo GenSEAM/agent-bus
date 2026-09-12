@@ -1,4 +1,4 @@
-(module asl-agent-bus/bus
+(module agent-bus/bus
   :d "Inter-Agent Swarm Bus Protocol in ASL"
   :x [AgentMessage
       BusEvent

@@ -1,4 +1,4 @@
-(module asl-bus/presence
+(module agent-bus/presence
   :d "Swarm Room Presence, Discovery, and Task Negotiation Protocol for Autonomous Inter-Agent Collaboration."
   :x [AgentStatus
       ClaimMode
