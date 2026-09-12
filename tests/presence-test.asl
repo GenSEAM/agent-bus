@@ -7,6 +7,7 @@
       test-negotiation-handshake-decline
       test-format-presence-roster
       test-bridge-external-dispatch
+      test-claim-path-and-roster
       run-presence-tests]
   :i [(presence :a p)
       (bridge :a b)])
@@ -14,8 +15,8 @@
 (df test-room-create-and-join [] -> Bool
   :d "Tests creating a room and registering peers."
   (let [(r0 (p/create-swarm-room "refactor-matrix" "Polyglot Refactoring Swarm"))
-        (p1 (p/SwarmPeer :agent-id "claude-code-1" :role "coder" :room "refactor-matrix" :status (p/status-idle) :capabilities (list "react-ast" "css-cascade") :last-ping-epoch 1757160000))
-        (p2 (p/SwarmPeer :agent-id "gemini-architect" :role "planner" :room "refactor-matrix" :status (p/status-busy) :capabilities (list "dag-planning") :last-ping-epoch 1757160000))
+        (p1 (p/SwarmPeer :agent-id "claude-code-1" :role "coder" :room "refactor-matrix" :status (p/status-idle) :capabilities (list "react-ast" "css-cascade") :last-ping-epoch 1757160000 :claims (list)))
+        (p2 (p/SwarmPeer :agent-id "gemini-architect" :role "planner" :room "refactor-matrix" :status (p/status-busy) :capabilities (list "dag-planning") :last-ping-epoch 1757160000 :claims (list)))
         (r1 (p/join-swarm-room r0 p1))
         (r2 (p/join-swarm-room r1 p2))]
     (assert (= (list-length (p/list-room-peers r2)) 2) "Room peers length must be 2")
@@ -25,7 +26,7 @@
 (df test-room-peer-lookup [] -> Bool
   :d "Tests finding a peer by identifier."
   (let [(r0 (p/create-swarm-room "benchmarks" "Model Telemetry"))
-        (p1 (p/SwarmPeer :agent-id "slm-m1-worker" :role "benchmarker" :room "benchmarks" :status (p/status-listening) :capabilities (list "m1-telemetry") :last-ping-epoch 1757160000))
+        (p1 (p/SwarmPeer :agent-id "slm-m1-worker" :role "benchmarker" :room "benchmarks" :status (p/status-listening) :capabilities (list "m1-telemetry") :last-ping-epoch 1757160000 :claims (list)))
         (r1 (p/join-swarm-room r0 p1))
         (found (p/find-peer-in-room r1 "slm-m1-worker"))
         (missing (p/find-peer-in-room r1 "unknown-agent"))]
@@ -40,7 +41,7 @@
 (df test-room-leave [] -> Bool
   :d "Tests removing a peer on room leave."
   (let [(r0 (p/create-swarm-room "eval-room" "SWE-bench"))
-        (p1 (p/SwarmPeer :agent-id "agent-a" :role "coder" :room "eval-room" :status (p/status-idle) :capabilities (list) :last-ping-epoch 0))
+        (p1 (p/SwarmPeer :agent-id "agent-a" :role "coder" :room "eval-room" :status (p/status-idle) :capabilities (list) :last-ping-epoch 0 :claims (list)))
         (r1 (p/join-swarm-room r0 p1))
         (r2 (p/leave-swarm-room r1 "agent-a"))]
     (assert (= (list-length (p/list-room-peers r1)) 1) "Room peers before leave must be 1")
@@ -67,7 +68,7 @@
 (df test-format-presence-roster [] -> Bool
   :d "Tests formatting presence roster table."
   (let [(r0 (p/create-swarm-room "ops" "Cluster Operations"))
-        (p1 (p/SwarmPeer :agent-id "gate-keeper" :role "auditor" :room "ops" :status (p/status-idle) :capabilities (list "gate.sh") :last-ping-epoch 0))
+        (p1 (p/SwarmPeer :agent-id "gate-keeper" :role "auditor" :room "ops" :status (p/status-idle) :capabilities (list "gate.sh") :last-ping-epoch 0 :claims (list)))
         (r1 (p/join-swarm-room r0 p1))
         (roster (p/format-presence-roster r1))]
     (assert (string-contains? roster "Swarm Room: ops") "Roster must contain room name")
@@ -86,6 +87,20 @@
     (assert (string-contains? res "Successfully joined room bridge-room") "Response must confirm joining room")
     true))
 
+(df test-claim-path-and-roster [] -> Bool
+  :d "Tests acquiring and releasing path claims and verifying roster formatting."
+  (let [(p0 (p/SwarmPeer :agent-id "worker-1" :role "coder" :room "swarm" :status (p/status-idle) :capabilities (list) :last-ping-epoch 100 :claims (list)))
+        (p1 (p/claim-path p0 "asl/tools/asl.c" (p/claim-write) 100 60))
+        (p2 (p/claim-path p1 "mem/src/vfs.asl" (p/claim-read) 100 60))
+        (p3 (p/release-claim p2 "asl/tools/asl.c"))
+        (room (p/join-swarm-room (p/create-swarm-room "swarm" "testing") p2))
+        (roster (p/format-presence-roster room))]
+    (and (= (list-length (.-claims p2)) 2)
+         (not (p/is-claim-expired? (first (.-claims p2)) 120))
+         (p/is-claim-expired? (first (.-claims p2)) 170)
+         (= (list-length (.-claims p3)) 1)
+         (string-contains? roster "asl/tools/asl.c"))))
+
 (df run-tests [] -> Bool
   :d "Runs all room presence and negotiation unit tests."
   (and (test-room-create-and-join)
@@ -94,7 +109,8 @@
        (test-negotiation-handshake-accept)
        (test-negotiation-handshake-decline)
        (test-format-presence-roster)
-       (test-bridge-external-dispatch)))
+       (test-bridge-external-dispatch)
+       (test-claim-path-and-roster)))
 
 (df run-presence-tests [] -> Bool
   :d "Runs all room presence and negotiation unit tests."

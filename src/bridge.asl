@@ -20,7 +20,8 @@
     :room room
     :status (p/status-idle)
     :capabilities caps
-    :last-ping-epoch 1757160000))
+    :last-ping-epoch 1757160000
+    :claims (list)))
 
 (df format-external-tool-schema [] -> Str
   :d "Renders the single canonical tool schema for external agents to interface with the ASL Swarm Bus."

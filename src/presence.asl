@@ -1,6 +1,8 @@
 (module asl-bus/presence
   :d "Swarm Room Presence, Discovery, and Task Negotiation Protocol for Autonomous Inter-Agent Collaboration."
   :x [AgentStatus
+      ClaimMode
+      PathClaim
       SwarmPeer
       SwarmRoom
       NegotiationKind
@@ -10,6 +12,9 @@
       leave-swarm-room
       list-room-peers
       find-peer-in-room
+      claim-path
+      release-claim
+      is-claim-expired?
       propose-task
       accept-task
       decline-task
@@ -22,13 +27,25 @@
   (:c status-listening [] "Agent is registered in passive listener/observer mode")
   (:c status-offline [] "Agent heartbeat has expired or node disconnected"))
 
+(dfe ClaimMode
+  (:c claim-read [] "Advisory read hold")
+  (:c claim-write [] "Advisory write hold"))
+
+(dfs PathClaim
+  (:f path Str "Repository-relative file path")
+  (:f mode ClaimMode "Advisory hold mode")
+  (:f holder Str "Agent identifier holding claim")
+  (:f epoch I64 "Epoch timestamp of claim acquisition")
+  (:f ttl-seconds I64 "Lease duration in seconds"))
+
 (dfs SwarmPeer
   (:f agent-id Str "Unique peer identifier e.g. claude-code-worker-1")
   (:f role Str "Specialized role e.g. planner, coder, reviewer")
   (:f room Str "Target room name e.g. refactor-matrix")
   (:f status AgentStatus "Current execution status")
   (:f capabilities (List Str) "List of advertised capability tokens")
-  (:f last-ping-epoch I64 "Last registered heartbeat epoch"))
+  (:f last-ping-epoch I64 "Last registered heartbeat epoch")
+  (:f claims (List PathClaim) "Active advisory path claims held by peer"))
 
 (dfs SwarmRoom
   (:f room-name Str "Unique room name")
@@ -90,6 +107,40 @@
         (none)
         (some (first matches)))))
 
+(df is-claim-expired? [(claim PathClaim) (now-epoch I64)] -> Bool
+  :d "Returns true if the path claim lease duration has expired."
+  (> now-epoch (+ (.-epoch claim) (.-ttl-seconds claim))))
+
+(df claim-path [(peer SwarmPeer) (path Str) (mode ClaimMode) (now-epoch I64) (ttl I64)] -> SwarmPeer
+  :d "Acquires or updates an advisory path claim on the peer."
+  (let [(new-claim (PathClaim :path path :mode mode :holder (.-agent-id peer) :epoch now-epoch :ttl-seconds ttl))
+        (active (filter (fn [(c PathClaim)] -> Bool
+                          (and (not (= (.-path c) path))
+                               (not (is-claim-expired? c now-epoch))))
+                        (.-claims peer)))]
+    (SwarmPeer
+      :agent-id (.-agent-id peer)
+      :role (.-role peer)
+      :room (.-room peer)
+      :status (.-status peer)
+      :capabilities (.-capabilities peer)
+      :last-ping-epoch now-epoch
+      :claims (list-append active (list new-claim)))))
+
+(df release-claim [(peer SwarmPeer) (path Str)] -> SwarmPeer
+  :d "Relinquishes an advisory path claim."
+  (let [(active (filter (fn [(c PathClaim)] -> Bool
+                          (not (= (.-path c) path)))
+                        (.-claims peer)))]
+    (SwarmPeer
+      :agent-id (.-agent-id peer)
+      :role (.-role peer)
+      :room (.-room peer)
+      :status (.-status peer)
+      :capabilities (.-capabilities peer)
+      :last-ping-epoch (.-last-ping-epoch peer)
+      :claims active)))
+
 (df propose-task [(from-id Str) (to-id Str) (task-name Str) (bid-id Str)] -> NegotiationOffer
   :d "Creates a task assignment proposal."
   (NegotiationOffer
@@ -124,17 +175,26 @@
     :reason reason))
 
 (df format-presence-roster [(room SwarmRoom)] -> Str
-  :d "Renders human-readable presence roster of room peers."
-  (let [(hdr (str "### Swarm Room: " (.-room-name room) " (" (.-topic room) ")\n"
-                  "| Agent ID | Role | Status | Capabilities |\n"
-                  "|---|---|---|---|\n"))]
+  :d "Renders human-readable presence roster of room peers with active claims."
+  (let [(hdr (str "### Swarm Room: " (.-room-name room) " (" (.-topic room) ")
+"
+                  "| Agent ID | Role | Status | Capabilities | Claims |
+"
+                  "|---|---|---|---|---|
+"))]
     (foldl (fn [(acc Str) (p SwarmPeer)] -> Str
              (let [(st-str (mt (.-status p)
                              ((status-idle) "idle")
                              ((status-busy) "busy")
                              ((status-listening) "listening")
                              ((status-offline) "offline")))
-                   (caps-str (string-join (.-capabilities p) ", "))]
-               (str acc "| `" (.-agent-id p) "` | " (.-role p) " | *" st-str "* | " caps-str " |\n")))
+                   (caps-str (string-join (.-capabilities p) ", "))
+                   (claims-str (if (list-empty? (.-claims p))
+                                   "none"
+                                   (string-join (map (fn [(c PathClaim)] -> Str
+                                                       (str (.-path c) " (" (mt (.-mode c) ((claim-read) "r") ((claim-write) "w")) ")"))
+                                                     (.-claims p)) ", ")))]
+               (str acc "| `" (.-agent-id p) "` | " (.-role p) " | *" st-str "* | " caps-str " | " claims-str " |
+")))
            hdr
            (.-peers room))))
