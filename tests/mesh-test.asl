@@ -74,6 +74,15 @@
       (assert (not (string-contains? dispatch-str ":task-id \"TASK-999\"")) "Mismatched task id must not appear")
       true)))
 
+(df test-agent-mesh-node-join [] -> Bool
+  :d "Verifies sovereign agent mesh node cluster registration without daemon overhead"
+  (let [(rt (m/create-routing-table))
+        (node (m/AgentMeshNode :node-id "node:supervisor" :role "auditor" :endpoint "in-proc" :status "online" :last-seen-epoch 100))
+        (rt2 (m/join-mesh-cluster rt node))]
+    (assert (= (int32-to-int64 (map-size (.-nodes rt2))) 1) "Routing table must contain registered agent mesh node")
+    (assert (map-has? (.-nodes rt2) "node:supervisor") "Routing table must contain node:supervisor")
+    true))
+
 (df run-tests [] -> Bool
   :d "Runs all mesh unit test assertions."
   (do

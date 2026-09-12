@@ -15,7 +15,8 @@
       make-buffer-lease create-mutex-registry
       lease-expired? acquire-buffer-lease
       release-buffer-lease evict-dead-peers
-      get-buffer-lease is-buffer-locked?]
+      get-buffer-lease is-buffer-locked?
+      AgentMeshNode join-mesh-cluster]
   :i [])
 
 (dfe TransportProtocol
@@ -244,3 +245,20 @@
     (PeerRegistry
       :peers new-map
       :local-workspace-hash (.-local-workspace-hash reg))))
+
+(dfs AgentMeshNode
+  (:f node-id Str "Unique sovereign agent mesh node identifier")
+  (:f role Str "Assigned agent role e.g. planner, coder, verifier")
+  (:f endpoint Str "Direct socket endpoint or in-process bus address")
+  (:f status Str "Active node execution status online, busy, idle")
+  (:f last-seen-epoch I64 "Epoch timestamp of last verified activity"))
+
+(df join-mesh-cluster [(rt RoutingTable) (node AgentMeshNode)] -> RoutingTable
+  :d "Registers or updates sovereign agent node into the mesh routing table without daemon overhead"
+  (let [(mesh-node (MeshNode
+                     :id (.-node-id node)
+                     :role (.-role node)
+                     :tier "tier-1-sovereign"
+                     :inbox-size 0
+                     :is-alive true))]
+    (register-mesh-node rt mesh-node)))
