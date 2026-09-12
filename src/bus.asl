@@ -7,7 +7,12 @@
       BusChannel
       TaskLifecycleState
       BusReceipt
+      ConditionWake
       dispatch-bus-event
+      query-bus-events
+      pull-bus-events
+      make-condition-wake
+      eval-condition-wake
       make-lifecycle-event
       format-lifecycle-sse
       channel-to-str
@@ -45,6 +50,12 @@
   (:f target Str "Target recipient identifier")
   (:f delivered Bool "True if event was delivered to channel")
   (:f timestamp I64 "Dispatch timestamp"))
+
+(dfs ConditionWake
+  (:f condition-name Str "Identifier of condition being observed")
+  (:f predicate-expr Str "Predicate expression to evaluate against event")
+  (:f target-agent Str "Target agent to be notified upon trigger")
+  (:f triggered Bool "True if condition predicate evaluated to true"))
 
 (df format-sse-event [(event-name Str) (data Str)] -> Str
   :d "Formats SSE event payload"
@@ -90,6 +101,35 @@
     :target (.-target msg)
     :delivered true
     :timestamp (.-timestamp msg)))
+
+(df query-bus-events [(events (List AgentMessage)) (channel-filter Str) (target-path Str)] -> (List AgentMessage)
+  :d "Pulls filtered event records on demand matching channel and target path outside context"
+  (filter (fn [(msg AgentMessage)] -> Bool
+            (and (or (= channel-filter "") (string-contains? (.-payload msg) channel-filter))
+                 (or (= target-path "") (string-contains? (.-payload msg) target-path))))
+          events))
+
+(df pull-bus-events [(events (List AgentMessage)) (topic Str)] -> (List AgentMessage)
+  :d "Pulls messages matching a specific topic or query"
+  (query-bus-events events topic ""))
+
+(df make-condition-wake [(name Str) (pred Str) (agent Str)] -> ConditionWake
+  :d "Initializes an un-triggered condition wake descriptor"
+  (ConditionWake
+    :condition-name name
+    :predicate-expr pred
+    :target-agent agent
+    :triggered false))
+
+(df eval-condition-wake [(wake ConditionWake) (msg AgentMessage)] -> ConditionWake
+  :d "Evaluates incoming event against condition wake predicate delivering condition rather than raw log"
+  (if (string-contains? (.-payload msg) (.-predicate-expr wake))
+      (ConditionWake
+        :condition-name (.-condition-name wake)
+        :predicate-expr (.-predicate-expr wake)
+        :target-agent (.-target-agent wake)
+        :triggered true)
+      wake))
 
 (df format-lifecycle-sse [(task-id Str) (state TaskLifecycleState) (detail Str)] -> Str
   :d "Formats task lifecycle event into SSE wire format"

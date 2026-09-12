@@ -38,11 +38,27 @@
     (assert (= (.-sender msg) "kernel") "Ping sender matches")
     true))
 
+(df test-query-events-and-condition-wake [] -> Bool
+  :d "Verifies pull-based event querying and condition-triggered wake evaluation"
+  (let [(m1 (bus/AgentMessage :sender "a1" :target "bus" :payload "(:change :path \"asl/tools/asl.c\")" :timestamp 100))
+        (m2 (bus/AgentMessage :sender "a2" :target "bus" :payload "(:change :path \"mem/src/vfs.asl\")" :timestamp 101))
+        (events (list m1 m2))
+        (q1 (bus/query-bus-events events "change" "asl/tools/asl.c"))
+        (w0 (bus/make-condition-wake "watch-asl" "asl/tools/asl.c" "supervisor"))
+        (w1 (bus/eval-condition-wake w0 m1))
+        (w2 (bus/eval-condition-wake w0 m2))]
+    (assert (= (list-length q1) 1) "Query must return exactly 1 matching event")
+    (assert (not (.-triggered w0)) "Initial wake must not be triggered")
+    (assert (.-triggered w1) "Wake against m1 must be triggered")
+    (assert (not (.-triggered w2)) "Wake against m2 must not be triggered")
+    true))
+
 (df run-tests [] -> Bool
   :d "Runs agent bus unit tests"
   (and (test-sse-formatting)
        (test-broadcast-event)
        (test-direct-event)
-       (test-ping-event)))
+       (test-ping-event)
+       (test-query-events-and-condition-wake)))
 
 (run-tests)
